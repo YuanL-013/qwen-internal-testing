@@ -2,7 +2,20 @@ import type { Scheme } from "../types";
 import { IcArrow, IcChip } from "./Icons";
 import Reveal from "./Reveal";
 
-export default function TitleBlock({ scheme, live }: { scheme: Scheme; live: boolean }) {
+const DATA_STATE = {
+  live: { led: "led bg-pass", text: "text-pass", label: "LIVE · REPO" },
+  stale: { led: "led bg-warn", text: "text-warn", label: "STALE FILE IGNORED" },
+  compiled: { led: "bg-copper", text: "text-copperlt", label: "BUILT-IN SNAPSHOT" },
+} as const;
+
+export default function TitleBlock({
+  scheme,
+  source,
+}: {
+  scheme: Scheme;
+  source: keyof typeof DATA_STATE;
+}) {
+  const ds = DATA_STATE[source];
   const all = scheme.categories.flatMap((c) => c.examples.map((e) => ({ title: e.title, verdict: e.verdict })));
   const passes = all.filter((e) => e.verdict === "pass").length;
   const fails = all.length - passes;
@@ -94,9 +107,18 @@ export default function TitleBlock({ scheme, live }: { scheme: Scheme; live: boo
               ))}
               <div className="flex">
                 <span className="w-24 border-r border-edgesoft px-3 py-1.5 tracking-[0.18em] text-faint">DATA</span>
-                <span className="flex flex-1 items-center gap-1.5 px-3 py-1.5 tracking-wider">
-                  <span className={`h-1.5 w-1.5 rounded-full ${live ? "led bg-pass" : "bg-warn"}`} />
-                  <span className={live ? "text-pass" : "text-warn"}>{live ? "LIVE · REPO" : "BUILT-IN SNAPSHOT"}</span>
+                <span
+                  className="flex flex-1 cursor-help items-center gap-1.5 px-3 py-1.5 tracking-wider"
+                  title={
+                    source === "stale"
+                      ? "data/scheme.json in this build is an older revision than the app — serving the compiled content instead."
+                      : source === "live"
+                        ? "Content loaded from data/scheme.json (reviewer-maintained)."
+                        : "No committed data file found — serving the revision compiled into this build."
+                  }
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${ds.led}`} />
+                  <span className={ds.text}>{ds.label}</span>
                 </span>
               </div>
             </div>

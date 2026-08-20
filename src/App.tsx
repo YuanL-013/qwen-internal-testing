@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Scheme } from "./types";
 import { DEFAULT_SCHEME } from "./data/scheme";
-import { fetchCommittedScheme } from "./store";
+import { fetchCommittedScheme, revRank } from "./store";
 import CircuitBackground from "./components/CircuitBackground";
 import TitleBlock, { TitleBlockSkeleton } from "./components/TitleBlock";
 import GuideLegend from "./components/GuideLegend";
@@ -14,21 +14,24 @@ import { IcSearch } from "./components/Icons";
 
 export default function App() {
   const [scheme, setScheme] = useState<Scheme | null>(null);
-  const [live, setLive] = useState(false);
+  const [source, setSource] = useState<"live" | "stale" | "compiled">("compiled");
   const [active, setActive] = useState("all");
   const [verdict, setVerdict] = useState<VerdictFilter>("all");
   const [query, setQuery] = useState("");
 
-  /* The guide is committed data: public/data/scheme.json. The compiled
-     default is only a fallback when the file can't be fetched. */
+  /* The guide is committed data: public/data/scheme.json. The data file is
+     used only when its revision is strictly newer than the one compiled into
+     this build — a stale file (old deploy, old commit) can never mask the
+     fresher built-in content. */
   useEffect(() => {
     let cancelled = false;
     fetchCommittedScheme().then((committed) => {
       if (cancelled) return;
-      if (committed) {
+      if (committed && revRank(committed.meta.rev) > revRank(DEFAULT_SCHEME.meta.rev)) {
         setScheme(committed);
-        setLive(true);
+        setSource("live");
       } else {
+        if (committed) setSource("stale");
         setScheme(structuredClone(DEFAULT_SCHEME));
       }
     });
@@ -80,7 +83,7 @@ export default function App() {
     <div className="relative min-h-screen">
       <CircuitBackground />
 
-      <TitleBlock scheme={scheme} live={live} />
+      <TitleBlock scheme={scheme} source={source} />
 
       <GuideLegend />
 

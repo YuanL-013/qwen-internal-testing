@@ -20,6 +20,14 @@ function normalizeScheme(raw: unknown): Scheme {
   };
 }
 
+/** Rank a document revision so builds can ignore stale data files ("A" < "B" < …; "C2" supported). */
+export function revRank(rev: string): number {
+  const v = (rev ?? "").trim().toUpperCase();
+  const m = /^([A-Z])(\d*)$/.exec(v);
+  if (m) return (m[1].charCodeAt(0) - 64) * 1000 + (m[2] ? parseInt(m[2], 10) : 0);
+  return v.length ? v.charCodeAt(0) : 0;
+}
+
 export async function fetchCommittedScheme(): Promise<Scheme | null> {
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}data/scheme.json`, { cache: "no-store" });
