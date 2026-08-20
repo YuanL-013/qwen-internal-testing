@@ -18,8 +18,8 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "Northbolt Robotics",
     doc: "STD-PCB-01",
-    rev: "C",
-    updated: "2026-02-12",
+    rev: "D",
+    updated: "2026-02-24",
   },
   categories: [
     {
@@ -87,6 +87,30 @@ export const DEFAULT_SCHEME: Scheme = {
           { diagram: "stitch", tags: ["grounding", "emi"] }
         ),
         ex(
+          "ex-decap-one",
+          "One decoupling cap per power pin",
+          "Every VDD / VDDA / VBAT pin of the MCU gets its own 100 nF cap with a short path to the pin and to ground — our usual practice is a 3.3 V zone on the back layer that each cap vias straight down into.",
+          "Each pin draws its own switching current, and a dedicated local cap is the only reservoir close enough to answer. The back-layer zone keeps every return path short without burning routing space on top.",
+          "pass",
+          { diagram: "decap", tags: ["decoupling", "mcu"] }
+        ),
+        ex(
+          "ex-reg-thermal",
+          "Regulators dump heat through vias into GND copper",
+          "The regulator's tab / exposed pad is stitched with thermal vias down to the ground plane; the plane copper does the spreading.",
+          "The tab is the main heat path out of the part. Vias into ground copper turn the whole plane into a heat sink — for our loads that is enough, no exotic copper pours needed.",
+          "pass",
+          { diagram: "thermalvias", tags: ["thermal", "regulator"] }
+        ),
+        ex(
+          "ex-rail-zone",
+          "Regulator outputs leave on copper zones",
+          "The 5 V switcher output reaches its inductor through a pour, the LM1117's 3.3 V leaves on a zone, and the 3.3 V rail itself is zoned or fat — never signal width. Bulk caps sit at the point of load, next to the inductor.",
+          "Rails carry the whole board's current, so thin wire drops voltage and burns heat exactly where you can least afford it. Copper is free — spend it. On the switcher side, wide copper also keeps the commutating loop tight and less noisy.",
+          "pass",
+          { diagram: "railzone", tags: ["power", "zones", "regulator"] }
+        ),
+        ex(
           "ex-viapad",
           "Via drilled inside an SMD pad",
           "A via sits directly inside an SMD pad, untented and unplugged.",
@@ -101,6 +125,71 @@ export const DEFAULT_SCHEME: Scheme = {
           "That is a short between the pad and the plane — sometimes only visible after assembly, when the board is already populated. Every pour must respect the board clearance rule against every net, no exceptions.",
           "fail",
           { diagram: "flood", tags: ["clearance", "shorts"] }
+        ),
+        ex(
+          "ex-decap-shared",
+          "One decoupling cap shared across power pins",
+          "A single cap — or a bunch wired together — feeds two or more VDD pins of the MCU.",
+          "The shared cap sits too far from most pins, and its path crosses the other pins' return currents, so high-frequency noise flows through the whole bunch instead of being absorbed at the source. One pin, one cap, short path.",
+          "fail",
+          { diagram: "decapbunch", tags: ["decoupling", "mcu"] }
+        ),
+        ex(
+          "ex-rail-thin",
+          "Power rails routed as thin traces",
+          "A regulator feeding its inductor through a skinny trace, or the 3.3 V rail routed at signal width.",
+          "Undersized copper means IR drop plus heat under load. On the switcher side it also stretches the loop inductance and makes ringing worse. If a rail must cross a crowded region, pour it on another layer and stitch down — don't neck it.",
+          "fail",
+          { diagram: "thinrail", tags: ["power", "width"] }
+        ),
+        ex(
+          "ex-cap-wrong",
+          "22 pF where the regulator wants 22 µF",
+          "The regulator's output bulk cap fitted in the wrong order of magnitude — a pF value where µF is required.",
+          "A pF cap only filters RF; the bulk cap is the energy store the load draws from between cycles. With pF in its place the output sags and the control loop can oscillate under load. Sanity-check µF vs nF vs pF on every passive before ordering.",
+          "fail",
+          { diagram: "wrongcap", tags: ["passives", "regulator"] }
+        ),
+      ],
+    },
+    {
+      id: "cat-bus",
+      code: "BUS",
+      name: "CAN, Clock & Signals",
+      blurb:
+        "CAN bus, crystal and general signal routing — small grouping and placement decisions that decide whether the bus survives a noisy robot.",
+      examples: [
+        ex(
+          "ex-can-pair",
+          "CANH and CANL routed as a pair",
+          "The two CAN wires run grouped and roughly parallel, similar length, away from power switching. Lightly grouped is enough — the concept is what matters.",
+          "CAN is differential: noise picked up on both wires cancels at the receiver. Split the pair and each wire picks up different noise, so the bus starts failing exactly when the motors spin. Full controlled-impedance pairing is overkill for us; keeping them together is not.",
+          "pass",
+          { diagram: "canpair", tags: ["can", "differential"] }
+        ),
+        ex(
+          "ex-xtal-caps",
+          "Load caps first, then the crystal",
+          "The crystal's load caps sit between the MCU and the crystal — the trace hits the cap pad before it reaches the crystal, with the shortest possible stubs.",
+          "The cap has to shunt the crystal pin to ground; any trace past the cap toward the crystal detunes the load capacitance and invites start-up trouble. Caps closest to the MCU side, crystal after.",
+          "pass",
+          { diagram: "xtal", tags: ["clock", "placement"] }
+        ),
+        ex(
+          "ex-via-clear",
+          "Signals keep clear of unrelated vias",
+          "Signal traces give non-member vias a healthy margin instead of slipping between them.",
+          "Via drills carry positional tolerance — a tight pass risks drill breakout or a short after fab, and stray via capacitance nicks at fast edges. If a corridor is tight, move the via, not the tolerance.",
+          "pass",
+          { diagram: "viakeepout", tags: ["routing", "vias"] }
+        ),
+        ex(
+          "ex-can-split",
+          "CAN lines routed independently",
+          "CANH and CANL sent on separate paths, or one of them crossing a power / switching area alone.",
+          "Whatever couples into one line but not the other arrives as a differential error — the one kind of noise CAN cannot reject. Re-pair them, even loosely, and steer both wires around the noisy copper.",
+          "fail",
+          { diagram: "cansplit", tags: ["can", "noise"] }
         ),
       ],
     },
@@ -128,6 +217,14 @@ export const DEFAULT_SCHEME: Scheme = {
           { diagram: "pin1", tags: ["silkscreen", "assembly"] }
         ),
         ex(
+          "ex-xh-lib",
+          "XH2.54 footprints from the library, with 3D",
+          "JST-XH (2.54 mm) connector footprints come from a proper library — pads, courtyard and 3D body included — so fit is checked in the 3D view before fab.",
+          "The 3D model is how you catch plug collisions, height clashes and mirrored connectors before you are holding a physical board. Library footprints also carry verified pad geometry instead of guesswork.",
+          "pass",
+          { diagram: "xh", tags: ["connectors", "3d"] }
+        ),
+        ex(
           "ex-hand",
           "Hand-drawn footprint, unverified",
           "Pads sketched by eye from the datasheet's mechanical drawing.",
@@ -142,6 +239,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "The component physically cannot be placed. This happens when a footprint is edited in the wrong layer view, so flipping the view is the very first thing anyone checks.",
           "fail",
           { diagram: "mirror", tags: ["layers", "placement"] }
+        ),
+        ex(
+          "ex-headers-tight",
+          "Headers packed with no room for housings",
+          "Adjacent 4-pin (or 2-pin) headers spaced for bare pins only — XH housings and plugs have nowhere to go.",
+          "XH housings are wider than their pins, and plugs need approach space. Pack headers together and only the first one stays pluggable. Space them for the housings, not for the drill holes.",
+          "fail",
+          { diagram: "headergap", tags: ["connectors", "placement"] }
         ),
       ],
     },
@@ -159,6 +264,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "Readable references let anyone map a fault from schematic to board in seconds. Labels inside the body get covered by the part anyway — dead ink.",
           "pass",
           { diagram: "refdes", tags: ["silkscreen", "readability"] }
+        ),
+        ex(
+          "ex-silk-headers",
+          "Header legends made obvious",
+          "Every header carries a loud legend: pin 1 marker, pitch, and what it is — net names or function — readable at arm's length.",
+          "During bring-up and in the pit, somebody will plug into the wrong header once. Obvious header silk is the cheapest mistake-prevention on the whole board.",
+          "pass",
+          { diagram: "silkhdr", tags: ["silkscreen", "connectors"] }
         ),
         ex(
           "ex-silkpad",
@@ -240,11 +353,15 @@ export const DEFAULT_SCHEME: Scheme = {
   checklist: [
     "DRC passes with zero errors at 0.2 mm / 0.2 mm",
     "No right-angle corners or acid traps on any net",
-    "Power nets ≥ 0.5 mm; no neck-downs below class width",
-    "Thermal relief on every pad connected to a plane",
+    "Power nets ≥ 0.5 mm; rails on zones, never thin wires",
+    "One 100 nF decoupling cap per MCU power pin",
+    "Regulator bulk caps are µF-class (not pF) and sit at the point of load",
+    "Thermal relief on plane pads; regulator tab via'd to GND copper",
     "No vias inside untented SMD pads",
-    "Pin-1 / polarity marked on every polarised part",
-    "No silkscreen over pads; every part labelled ≥ 1 mm",
+    "CANH/CANL grouped; crystal load caps on the MCU side",
+    "Pin-1 / polarity marked on every polarised part; header legends obvious",
+    "Connectors from the library with 3D checked; headers spaced for housings",
+    "Every subsystem in the schematic has a power feed — pneumatics included",
     "Gerber set + drill file verified layer-by-layer in a viewer",
   ],
 };

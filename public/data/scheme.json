@@ -2,8 +2,8 @@
   "meta": {
     "team": "Northbolt Robotics",
     "doc": "STD-PCB-01",
-    "rev": "C",
-    "updated": "2026-02-12"
+    "rev": "D",
+    "updated": "2026-02-24"
   },
   "categories": [
     {
@@ -15,38 +15,38 @@
         {
           "id": "ex-45",
           "title": "45° corners everywhere",
-          "verdict": "pass",
           "description": "Every change of direction is a 45° mitre or a smooth arc — no net on the board carries a right angle.",
           "reason": "Right-angle corners trap etchant during fabrication and become impedance bumps on fast signals. 45° corners etch evenly, keep impedance constant and read as intentional work.",
-          "tags": ["routing", "geometry"],
-          "diagram": "corners"
+          "verdict": "pass",
+          "diagram": "corners",
+          "tags": ["routing", "geometry"]
         },
         {
           "id": "ex-netclass",
           "title": "Net classes, not magic widths",
-          "verdict": "pass",
           "description": "Power nets run at 0.5 mm, signals at 0.25 mm — widths defined once in net classes, so the DRC catches any violation automatically.",
           "reason": "Net classes move width rules out of memory and into the DRC. Widths stay consistent across the whole board, and anyone can verify the rule set in one place.",
-          "tags": ["routing", "drc"],
-          "diagram": "netclass"
+          "verdict": "pass",
+          "diagram": "netclass",
+          "tags": ["routing", "drc"]
         },
         {
           "id": "ex-90",
           "title": "90° corners on traces",
-          "verdict": "fail",
           "description": "One or more traces turn with a sharp right angle.",
           "reason": "Acid trap: etchant pools inside the corner and over-etchs the copper, thinning the trace exactly where it bends. On fast signals the corner adds capacitance and reflects energy. Use two 45° segments or an arc instead.",
-          "tags": ["routing", "etching"],
-          "diagram": "corner90"
+          "verdict": "fail",
+          "diagram": "corner90",
+          "tags": ["routing", "etching"]
         },
         {
           "id": "ex-neck",
           "title": "Neck-downs below class width",
-          "verdict": "fail",
           "description": "A trace narrows below its class width to squeeze between two pads.",
           "reason": "The thin segment carries the same current as the rest of the net, so it becomes a fuse: it heats first and can be eaten entirely during etching. If the gap can't be crossed at full width, the neighbouring pads need to move.",
-          "tags": ["routing", "current"],
-          "diagram": "neckdown"
+          "verdict": "fail",
+          "diagram": "neckdown",
+          "tags": ["routing", "current"]
         }
       ]
     },
@@ -59,38 +59,136 @@
         {
           "id": "ex-relief",
           "title": "Thermal relief on plane connections",
-          "verdict": "pass",
           "description": "Every pad tied into a copper plane connects through four spokes, never solid copper.",
           "reason": "A solid tie into a big plane drags heat out of the joint faster than the iron can deliver it — the classic cold joint. Spokes keep the electrical connection while letting the pad reach soldering temperature.",
-          "tags": ["soldering", "planes"],
-          "diagram": "relief"
+          "verdict": "pass",
+          "diagram": "relief",
+          "tags": ["soldering", "planes"]
         },
         {
           "id": "ex-stitch",
           "title": "Ground pour stitched with vias",
-          "verdict": "pass",
           "description": "Top and bottom ground pours are tied together with stitching vias, placed densely near signal layer changes.",
           "reason": "Stitching gives return currents a short path home, shrinking loop area and EMI — and stops the two planes resonating against each other at RF.",
-          "tags": ["grounding", "emi"],
-          "diagram": "stitch"
+          "verdict": "pass",
+          "diagram": "stitch",
+          "tags": ["grounding", "emi"]
+        },
+        {
+          "id": "ex-decap-one",
+          "title": "One decoupling cap per power pin",
+          "description": "Every VDD / VDDA / VBAT pin of the MCU gets its own 100 nF cap with a short path to the pin and to ground — our usual practice is a 3.3 V zone on the back layer that each cap vias straight down into.",
+          "reason": "Each pin draws its own switching current, and a dedicated local cap is the only reservoir close enough to answer. The back-layer zone keeps every return path short without burning routing space on top.",
+          "verdict": "pass",
+          "diagram": "decap",
+          "tags": ["decoupling", "mcu"]
+        },
+        {
+          "id": "ex-reg-thermal",
+          "title": "Regulators dump heat through vias into GND copper",
+          "description": "The regulator's tab / exposed pad is stitched with thermal vias down to the ground plane; the plane copper does the spreading.",
+          "reason": "The tab is the main heat path out of the part. Vias into ground copper turn the whole plane into a heat sink — for our loads that is enough, no exotic copper pours needed.",
+          "verdict": "pass",
+          "diagram": "thermalvias",
+          "tags": ["thermal", "regulator"]
+        },
+        {
+          "id": "ex-rail-zone",
+          "title": "Regulator outputs leave on copper zones",
+          "description": "The 5 V switcher output reaches its inductor through a pour, the LM1117's 3.3 V leaves on a zone, and the 3.3 V rail itself is zoned or fat — never signal width. Bulk caps sit at the point of load, next to the inductor.",
+          "reason": "Rails carry the whole board's current, so thin wire drops voltage and burns heat exactly where you can least afford it. Copper is free — spend it. On the switcher side, wide copper also keeps the commutating loop tight and less noisy.",
+          "verdict": "pass",
+          "diagram": "railzone",
+          "tags": ["power", "zones", "regulator"]
         },
         {
           "id": "ex-viapad",
           "title": "Via drilled inside an SMD pad",
-          "verdict": "fail",
           "description": "A via sits directly inside an SMD pad, untented and unplugged.",
           "reason": "During reflow, molten solder wicks down the via and starves the joint — or the uneven pad makes the part tombstone. Keep vias outside the pad, or use properly tented and plugged via-in-pad.",
-          "tags": ["assembly", "reflow"],
-          "diagram": "viapad"
+          "verdict": "fail",
+          "diagram": "viapad",
+          "tags": ["assembly", "reflow"]
         },
         {
           "id": "ex-flood",
           "title": "Copper pour floods a pad",
-          "verdict": "fail",
           "description": "A ground pour creeps onto a signal pad with zero clearance.",
           "reason": "That is a short between the pad and the plane — sometimes only visible after assembly, when the board is already populated. Every pour must respect the board clearance rule against every net, no exceptions.",
-          "tags": ["clearance", "shorts"],
-          "diagram": "flood"
+          "verdict": "fail",
+          "diagram": "flood",
+          "tags": ["clearance", "shorts"]
+        },
+        {
+          "id": "ex-decap-shared",
+          "title": "One decoupling cap shared across power pins",
+          "description": "A single cap — or a bunch wired together — feeds two or more VDD pins of the MCU.",
+          "reason": "The shared cap sits too far from most pins, and its path crosses the other pins' return currents, so high-frequency noise flows through the whole bunch instead of being absorbed at the source. One pin, one cap, short path.",
+          "verdict": "fail",
+          "diagram": "decapbunch",
+          "tags": ["decoupling", "mcu"]
+        },
+        {
+          "id": "ex-rail-thin",
+          "title": "Power rails routed as thin traces",
+          "description": "A regulator feeding its inductor through a skinny trace, or the 3.3 V rail routed at signal width.",
+          "reason": "Undersized copper means IR drop plus heat under load. On the switcher side it also stretches the loop inductance and makes ringing worse. If a rail must cross a crowded region, pour it on another layer and stitch down — don't neck it.",
+          "verdict": "fail",
+          "diagram": "thinrail",
+          "tags": ["power", "width"]
+        },
+        {
+          "id": "ex-cap-wrong",
+          "title": "22 pF where the regulator wants 22 µF",
+          "description": "The regulator's output bulk cap fitted in the wrong order of magnitude — a pF value where µF is required.",
+          "reason": "A pF cap only filters RF; the bulk cap is the energy store the load draws from between cycles. With pF in its place the output sags and the control loop can oscillate under load. Sanity-check µF vs nF vs pF on every passive before ordering.",
+          "verdict": "fail",
+          "diagram": "wrongcap",
+          "tags": ["passives", "regulator"]
+        }
+      ]
+    },
+    {
+      "id": "cat-bus",
+      "code": "BUS",
+      "name": "CAN, Clock & Signals",
+      "blurb": "CAN bus, crystal and general signal routing — small grouping and placement decisions that decide whether the bus survives a noisy robot.",
+      "examples": [
+        {
+          "id": "ex-can-pair",
+          "title": "CANH and CANL routed as a pair",
+          "description": "The two CAN wires run grouped and roughly parallel, similar length, away from power switching. Lightly grouped is enough — the concept is what matters.",
+          "reason": "CAN is differential: noise picked up on both wires cancels at the receiver. Split the pair and each wire picks up different noise, so the bus starts failing exactly when the motors spin. Full controlled-impedance pairing is overkill for us; keeping them together is not.",
+          "verdict": "pass",
+          "diagram": "canpair",
+          "tags": ["can", "differential"]
+        },
+        {
+          "id": "ex-xtal-caps",
+          "title": "Load caps first, then the crystal",
+          "description": "The crystal's load caps sit between the MCU and the crystal — the trace hits the cap pad before it reaches the crystal, with the shortest possible stubs.",
+          "reason": "The cap has to shunt the crystal pin to ground; any trace past the cap toward the crystal detunes the load capacitance and invites start-up trouble. Caps closest to the MCU side, crystal after.",
+          "verdict": "pass",
+          "diagram": "xtal",
+          "tags": ["clock", "placement"]
+        },
+        {
+          "id": "ex-via-clear",
+          "title": "Signals keep clear of unrelated vias",
+          "description": "Signal traces give non-member vias a healthy margin instead of slipping between them.",
+          "reason": "Via drills carry positional tolerance — a tight pass risks drill breakout or a short after fab, and stray via capacitance nicks at fast edges. If a corridor is tight, move the via, not the tolerance.",
+          "verdict": "pass",
+          "diagram": "viakeepout",
+          "tags": ["routing", "vias"]
+        },
+        {
+          "id": "ex-can-split",
+          "title": "CAN lines routed independently",
+          "description": "CANH and CANL sent on separate paths, or one of them crossing a power / switching area alone.",
+          "reason": "Whatever couples into one line but not the other arrives as a differential error — the one kind of noise CAN cannot reject. Re-pair them, even loosely, and steer both wires around the noisy copper.",
+          "verdict": "fail",
+          "diagram": "cansplit",
+          "tags": ["can", "noise"]
         }
       ]
     },
@@ -103,38 +201,56 @@
         {
           "id": "ex-lib",
           "title": "Library footprints, IPC-7351",
-          "verdict": "pass",
           "description": "Every part uses a footprint from the team library, generated to IPC-7351 density level B.",
           "reason": "Generated footprints match real part bodies and paste-stencil rules, avoiding the tombstoning and misalignment that hand-drawn pads cause after reflow.",
-          "tags": ["library", "ipc"],
-          "diagram": "footprint"
+          "verdict": "pass",
+          "diagram": "footprint",
+          "tags": ["library", "ipc"]
         },
         {
           "id": "ex-pin1",
           "title": "Pin 1 and polarity marked",
-          "verdict": "pass",
           "description": "Every polarised part has a pin-1 dot or triangle on silkscreen, and the matching marker sits on the footprint itself.",
           "reason": "Assembly — human or pick-and-place — must know orientation with zero doubt. Missing polarity marks are the number-one cause of backwards parts on student boards.",
-          "tags": ["silkscreen", "assembly"],
-          "diagram": "pin1"
+          "verdict": "pass",
+          "diagram": "pin1",
+          "tags": ["silkscreen", "assembly"]
+        },
+        {
+          "id": "ex-xh-lib",
+          "title": "XH2.54 footprints from the library, with 3D",
+          "description": "JST-XH (2.54 mm) connector footprints come from a proper library — pads, courtyard and 3D body included — so fit is checked in the 3D view before fab.",
+          "reason": "The 3D model is how you catch plug collisions, height clashes and mirrored connectors before you are holding a physical board. Library footprints also carry verified pad geometry instead of guesswork.",
+          "verdict": "pass",
+          "diagram": "xh",
+          "tags": ["connectors", "3d"]
         },
         {
           "id": "ex-hand",
           "title": "Hand-drawn footprint, unverified",
-          "verdict": "fail",
           "description": "Pads sketched by eye from the datasheet's mechanical drawing.",
           "reason": "Datasheet package drawings are not PCB pad geometry. Unchecked footprints mean solderability problems discovered only after fabrication. Use the library — or generate the pads, then measure them against the drawing.",
-          "tags": ["library", "risk"],
-          "diagram": "sketchfp"
+          "verdict": "fail",
+          "diagram": "sketchfp",
+          "tags": ["library", "risk"]
         },
         {
           "id": "ex-mirror",
           "title": "Mirrored footprint",
-          "verdict": "fail",
           "description": "A part drawn as if seen through the board — pads mirrored, silkscreen text backwards.",
           "reason": "The component physically cannot be placed. This happens when a footprint is edited in the wrong layer view, so flipping the view is the very first thing anyone checks.",
-          "tags": ["layers", "placement"],
-          "diagram": "mirror"
+          "verdict": "fail",
+          "diagram": "mirror",
+          "tags": ["layers", "placement"]
+        },
+        {
+          "id": "ex-headers-tight",
+          "title": "Headers packed with no room for housings",
+          "description": "Adjacent 4-pin (or 2-pin) headers spaced for bare pins only — XH housings and plugs have nowhere to go.",
+          "reason": "XH housings are wider than their pins, and plugs need approach space. Pack headers together and only the first one stays pluggable. Space them for the housings, not for the drill holes.",
+          "verdict": "fail",
+          "diagram": "headergap",
+          "tags": ["connectors", "placement"]
         }
       ]
     },
@@ -147,29 +263,38 @@
         {
           "id": "ex-refdes",
           "title": "Reference designators outside the body",
-          "verdict": "pass",
           "description": "Every part is labelled with a reference of at least 1 mm height, placed outside the component body, reading left-to-right or bottom-to-top.",
           "reason": "Readable references let anyone map a fault from schematic to board in seconds. Labels inside the body get covered by the part anyway — dead ink.",
-          "tags": ["silkscreen", "readability"],
-          "diagram": "refdes"
+          "verdict": "pass",
+          "diagram": "refdes",
+          "tags": ["silkscreen", "readability"]
+        },
+        {
+          "id": "ex-silk-headers",
+          "title": "Header legends made obvious",
+          "description": "Every header carries a loud legend: pin 1 marker, pitch, and what it is — net names or function — readable at arm's length.",
+          "reason": "During bring-up and in the pit, somebody will plug into the wrong header once. Obvious header silk is the cheapest mistake-prevention on the whole board.",
+          "verdict": "pass",
+          "diagram": "silkhdr",
+          "tags": ["silkscreen", "connectors"]
         },
         {
           "id": "ex-silkpad",
           "title": "Silkscreen over pads",
-          "verdict": "fail",
           "description": "Legend lines or text cross exposed copper pads.",
           "reason": "Ink on a pad stops solder from wetting — opens and weak joints follow. Many fabs silently strip silk from pads, taking your markings with it. Keep all silk at least 0.2 mm from exposed copper.",
-          "tags": ["silkscreen", "soldering"],
-          "diagram": "silkpad"
+          "verdict": "fail",
+          "diagram": "silkpad",
+          "tags": ["silkscreen", "soldering"]
         },
         {
           "id": "ex-polarity",
           "title": "Missing or ambiguous polarity",
-          "verdict": "fail",
           "description": "Diodes, electrolytic caps or connectors carry no visible polarity mark on the assembled side.",
-          "reason": "It forces the assembler to cross-check the schematic for every single part — one wrong guess destroys the board at first power-on.",
-          "tags": ["silkscreen", "assembly"],
-          "diagram": "nopolarity"
+          "reason": "It forces the assembler to cross-check the schematic for every single part — and one wrong guess destroys the board at first power-on.",
+          "verdict": "fail",
+          "diagram": "nopolarity",
+          "tags": ["silkscreen", "assembly"]
         }
       ]
     },
@@ -182,29 +307,29 @@
         {
           "id": "ex-drc",
           "title": "DRC clean at the fab's real limits",
-          "verdict": "pass",
           "description": "The design passes DRC with zero errors at 0.2 mm clearance / 0.2 mm track — our JLCPCB baseline.",
           "reason": "A clean DRC at the fab's actual capability is the cheapest insurance that exists. Running it with looser rules just hides failures the fab will find for you, at your expense.",
-          "tags": ["drc", "fab"],
-          "diagram": "drc"
+          "verdict": "pass",
+          "diagram": "drc",
+          "tags": ["drc", "fab"]
         },
         {
           "id": "ex-sliver",
           "title": "Copper slivers between pads",
-          "verdict": "fail",
           "description": "Thin copper splinters left between pads after a pour flood.",
           "reason": "Slivers can detach during etching and bridge neighbouring pads, or corrode loose months later. Adjust pour clearance and hunt for isolated islands after every flood.",
-          "tags": ["pour", "etching"],
-          "diagram": "sliver"
+          "verdict": "fail",
+          "diagram": "sliver",
+          "tags": ["pour", "etching"]
         },
         {
           "id": "ex-creep",
           "title": "Creepage violation on HV nets",
-          "verdict": "fail",
           "description": "Mains or high-voltage nets run closer than the creepage table allows.",
           "reason": "Too little surface distance lets tracking arcs form across the board over time — a safety failure, not a cosmetic one. HV nets get their own clearance rules and usually a routed slot.",
-          "tags": ["safety", "hv"],
-          "diagram": "creepage"
+          "verdict": "fail",
+          "diagram": "creepage",
+          "tags": ["safety", "hv"]
         }
       ]
     },
@@ -217,20 +342,20 @@
         {
           "id": "ex-gerber",
           "title": "Gerber set verified in a viewer",
-          "verdict": "pass",
           "description": "All copper layers, masks, silks, paste, outline and the Excellon drill file exported — then eyeballed layer by layer in a Gerber viewer before zipping.",
           "reason": "Viewer review catches missing layers, mirrored art and wrong units before the board ships. Most “the fab broke my board” stories start exactly here.",
-          "tags": ["outputs", "review"],
-          "diagram": "gerbers"
+          "verdict": "pass",
+          "diagram": "gerbers",
+          "tags": ["outputs", "review"]
         },
         {
           "id": "ex-drill",
           "title": "Missing or mismatched drill file",
-          "verdict": "fail",
           "description": "The drill file is absent from the Gerber zip, or drill hits do not line up with the pads.",
           "reason": "Without the drill data nobody can make holes — or worse, the fab guesses. Re-export the whole set from one CAD session and verify every layer, every time.",
-          "tags": ["outputs", "fab"],
-          "diagram": "drill"
+          "verdict": "fail",
+          "diagram": "drill",
+          "tags": ["outputs", "fab"]
         }
       ]
     }
@@ -238,11 +363,15 @@
   "checklist": [
     "DRC passes with zero errors at 0.2 mm / 0.2 mm",
     "No right-angle corners or acid traps on any net",
-    "Power nets ≥ 0.5 mm; no neck-downs below class width",
-    "Thermal relief on every pad connected to a plane",
+    "Power nets ≥ 0.5 mm; rails on zones, never thin wires",
+    "One 100 nF decoupling cap per MCU power pin",
+    "Regulator bulk caps are µF-class (not pF) and sit at the point of load",
+    "Thermal relief on plane pads; regulator tab via'd to GND copper",
     "No vias inside untented SMD pads",
-    "Pin-1 / polarity marked on every polarised part",
-    "No silkscreen over pads; every part labelled ≥ 1 mm",
+    "CANH/CANL grouped; crystal load caps on the MCU side",
+    "Pin-1 / polarity marked on every polarised part; header legends obvious",
+    "Connectors from the library with 3D checked; headers spaced for housings",
+    "Every subsystem in the schematic has a power feed — pneumatics included",
     "Gerber set + drill file verified layer-by-layer in a viewer"
   ]
 }
