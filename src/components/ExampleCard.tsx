@@ -54,6 +54,11 @@ export default function ExampleCard({
                 <IcChip size={26} />
               </div>
             )}
+            {example.image && (
+              <span className="absolute left-2.5 top-2.5 border border-copper/70 bg-bg/75 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.2em] text-copperlt backdrop-blur-[2px]">
+                REAL PHOTO
+              </span>
+            )}
             {/* verdict stamp */}
             <span
               className={`absolute right-2.5 top-2.5 -rotate-6 border-2 px-2 py-0.5 font-display text-[12px] font-bold tracking-[0.22em] backdrop-blur-[2px] transition-transform duration-300 group-hover:-rotate-2 ${

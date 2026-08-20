@@ -18,8 +18,8 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "Northbolt Robotics",
     doc: "STD-PCB-01",
-    rev: "D",
-    updated: "2026-02-24",
+    rev: "E",
+    updated: "2026-03-04",
   },
   categories: [
     {
@@ -46,6 +46,14 @@ export const DEFAULT_SCHEME: Scheme = {
           { diagram: "netclass", tags: ["routing", "drc"] }
         ),
         ex(
+          "ex-teardrop",
+          "Teardrops at pad entries",
+          "Traces flare into a teardrop where they meet pads and vias, instead of stopping abruptly at the pad edge.",
+          "The flare spreads drill shock and thermal stress over more copper, so pads stop lifting during rework or heavy soldering. Most CAD tools generate them in one click — there is no reason not to.",
+          "pass",
+          { diagram: "teardrop", tags: ["routing", "reliability"] }
+        ),
+        ex(
           "ex-90",
           "90° corners on traces",
           "One or more traces turn with a sharp right angle.",
@@ -60,6 +68,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "The thin segment carries the same current as the rest of the net, so it becomes a fuse: it heats first and can be eaten entirely during etching. If the gap can't be crossed at full width, the neighbouring pads need to move.",
           "fail",
           { diagram: "neckdown", tags: ["routing", "current"] }
+        ),
+        ex(
+          "ex-antipad",
+          "Holes biting into pads",
+          "A drill breaks through the edge of a pad, or the annular ring is thinner than the fab's minimum.",
+          "With little or no ring left, the barrel connection is unreliable and the pad can delaminate at the first rework. Give every hole a full annular ring — or keep it out of the pad entirely.",
+          "fail",
+          { diagram: "antipad", tags: ["drill", "reliability"] }
         ),
       ],
     },
@@ -82,7 +98,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "ex-stitch",
           "Ground pour stitched with vias",
           "Top and bottom ground pours are tied together with stitching vias, placed densely near signal layer changes.",
-          "Stitching gives return currents a short path home, shrinking loop area and EMI — and stops the two planes resonating against each other at RF.",
+          "Stitching gives return currents a short path home, shrinks loop area and EMI, and stops the two planes resonating against each other at RF.",
           "pass",
           { diagram: "stitch", tags: ["grounding", "emi"] }
         ),
@@ -93,6 +109,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "Each pin draws its own switching current, and a dedicated local cap is the only reservoir close enough to answer. The back-layer zone keeps every return path short without burning routing space on top.",
           "pass",
           { diagram: "decap", tags: ["decoupling", "mcu"] }
+        ),
+        ex(
+          "ex-cap-orient",
+          "Bulk caps oriented before fab",
+          "Every polarised cap — electrolytic or tantalum — has its stripe / marking matched to the board silk, checked twice: once in layout, once against the BOM.",
+          "A reversed bulk cap is the classic first-power-on firework. The stripe always means the negative side; when part and footprint disagree, the part wins and the footprint gets fixed.",
+          "pass",
+          { diagram: "caporient", tags: ["passives", "polarity"] }
         ),
         ex(
           "ex-reg-thermal",
@@ -109,6 +133,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "Rails carry the whole board's current, so thin wire drops voltage and burns heat exactly where you can least afford it. Copper is free — spend it. On the switcher side, wide copper also keeps the commutating loop tight and less noisy.",
           "pass",
           { diagram: "railzone", tags: ["power", "zones", "regulator"] }
+        ),
+        ex(
+          "ex-starpoint",
+          "Analog and digital grounds split at one point",
+          "Sensitive analog circuitry gets its own quiet ground region, joined to the noisy digital ground at a single star point — one 0 Ω resistor or narrow bridge.",
+          "Motor and switcher return currents flowing through the analog ground show up as noise on every measurement. Splitting the regions and forcing one crossing keeps the dirty currents out of the quiet zone.",
+          "pass",
+          { diagram: "starpoint", tags: ["grounding", "analog"] }
         ),
         ex(
           "ex-viapad",
@@ -157,15 +189,15 @@ export const DEFAULT_SCHEME: Scheme = {
       code: "BUS",
       name: "CAN, Clock & Signals",
       blurb:
-        "CAN bus, crystal and general signal routing — small grouping and placement decisions that decide whether the bus survives a noisy robot.",
+        "CAN bus, crystal and general signal routing — the small symmetry and placement decisions that decide whether the bus survives a noisy robot.",
       examples: [
         ex(
           "ex-can-pair",
-          "CANH and CANL routed as a pair",
-          "The two CAN wires run grouped and roughly parallel, similar length, away from power switching. Lightly grouped is enough — the concept is what matters.",
-          "CAN is differential: noise picked up on both wires cancels at the receiver. Split the pair and each wire picks up different noise, so the bus starts failing exactly when the motors spin. Full controlled-impedance pairing is overkill for us; keeping them together is not.",
+          "CANH and CANL as symmetrical as possible",
+          "The two CAN wires are routed as a mirror pair: same length, same bends, same spacing — as symmetrical as the board allows — and kept away from power switching.",
+          "CAN is differential: the receiver only reads the difference between the wires. The more symmetric the pair, the more of the picked-up noise lands on both wires equally and cancels out. Asymmetry turns common noise into differential errors — and the bus starts failing exactly when the motors spin.",
           "pass",
-          { diagram: "canpair", tags: ["can", "differential"] }
+          { diagram: "canpair", tags: ["can", "differential", "symmetry"] }
         ),
         ex(
           "ex-xtal-caps",
@@ -185,11 +217,19 @@ export const DEFAULT_SCHEME: Scheme = {
         ),
         ex(
           "ex-can-split",
-          "CAN lines routed independently",
-          "CANH and CANL sent on separate paths, or one of them crossing a power / switching area alone.",
-          "Whatever couples into one line but not the other arrives as a differential error — the one kind of noise CAN cannot reject. Re-pair them, even loosely, and steer both wires around the noisy copper.",
+          "CAN lines split or length-mismatched",
+          "CANH and CANL sent on different paths, one crossing a power / switching area alone, or the two arriving with visibly different lengths.",
+          "Whatever couples into one line but not the other arrives as a differential error — the one kind of noise CAN cannot reject. Length mismatch adds skew on top. Re-pair them, mirror the bends, and steer both wires around the noisy copper.",
           "fail",
-          { diagram: "cansplit", tags: ["can", "noise"] }
+          { diagram: "cansplit", tags: ["can", "noise", "symmetry"] }
+        ),
+        ex(
+          "ex-xtal-ring",
+          "Crystal left unshielded",
+          "No ground vias around the crystal, or switching copper routed under or beside it.",
+          "A ring of GND stitching vias around the crystal — with the load caps inside it — shields the clock from nearby switching noise and gives the caps a quiet reference. Without it, the oscillator couples to whatever is noisy this week. A dozen vias is cheap insurance for the whole robot's timing.",
+          "fail",
+          { diagram: "xtalring", tags: ["clock", "shielding"] }
         ),
       ],
     },
@@ -223,6 +263,22 @@ export const DEFAULT_SCHEME: Scheme = {
           "The 3D model is how you catch plug collisions, height clashes and mirrored connectors before you are holding a physical board. Library footprints also carry verified pad geometry instead of guesswork.",
           "pass",
           { diagram: "xh", tags: ["connectors", "3d"] }
+        ),
+        ex(
+          "ex-courtyard",
+          "Courtyard kept clear",
+          "Every footprint carries a courtyard (F.CrtYd) and nothing — tracks, silks of other parts, other bodies — enters it.",
+          "The courtyard is the part's working space: placement tolerance, rework clearance and inspection access all live there. Parts that share copper fight over it forever.",
+          "pass",
+          { diagram: "courtyard", tags: ["ipc", "placement"] }
+        ),
+        ex(
+          "ex-mount",
+          "Mounting holes done properly",
+          "Mounting holes are plated where they carry ground, keep a copper keep-out ring around the hole, and leave clearance for the screw head and washer.",
+          "Plated holes tie the chassis to ground and survive repeated screwing; the keep-out stops the screw biting live copper, and the clearance circle stops the head shorting pads nobody remembered.",
+          "pass",
+          { diagram: "mount", tags: ["mechanical", "grounding"] }
         ),
         ex(
           "ex-hand",
@@ -272,6 +328,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "During bring-up and in the pit, somebody will plug into the wrong header once. Obvious header silk is the cheapest mistake-prevention on the whole board.",
           "pass",
           { diagram: "silkhdr", tags: ["silkscreen", "connectors"] }
+        ),
+        ex(
+          "ex-testpts",
+          "Test points where the probes go",
+          "Bare, solder-mask-opened pads on a 1.27 mm grid for the rails and buses you will actually probe — 3.3 V, CANH, CANL, GND — each labelled in silk.",
+          "Without test points, bring-up means probing a 0402 pad with a shaking hand. A labelled probe pad turns a twenty-minute debug into a thirty-second one.",
+          "pass",
+          { diagram: "testpts", tags: ["bringup", "probing"] }
         ),
         ex(
           "ex-silkpad",
@@ -340,6 +404,14 @@ export const DEFAULT_SCHEME: Scheme = {
           { diagram: "gerbers", tags: ["outputs", "review"] }
         ),
         ex(
+          "ex-fiducials",
+          "Fiducials for the pick-and-place",
+          "At least three global fiducials — bare 1 mm copper dots with mask opened, placed asymmetrically — plus a local pair beside any fine-pitch part.",
+          "The placement machine finds the board's real position through the fiducials. Without them, or with them covered by mask or silk, every SMD part shifts by the panel's mechanical tolerance.",
+          "pass",
+          { diagram: "fiducials", tags: ["assembly", "outputs"] }
+        ),
+        ex(
           "ex-drill",
           "Missing or mismatched drill file",
           "The drill file is absent from the Gerber zip, or drill hits do not line up with the pads.",
@@ -355,12 +427,15 @@ export const DEFAULT_SCHEME: Scheme = {
     "No right-angle corners or acid traps on any net",
     "Power nets ≥ 0.5 mm; rails on zones, never thin wires",
     "One 100 nF decoupling cap per MCU power pin",
-    "Regulator bulk caps are µF-class (not pF) and sit at the point of load",
+    "Regulator bulk caps are µF-class (not pF), oriented correctly, at the point of load",
     "Thermal relief on plane pads; regulator tab via'd to GND copper",
-    "No vias inside untented SMD pads",
-    "CANH/CANL grouped; crystal load caps on the MCU side",
+    "No vias inside untented SMD pads; annular rings intact",
+    "CANH/CANL symmetrical — same length, same bends; crystal capped on the MCU side and ringed with GND vias",
+    "Teardrops at pad entries; no stubs past the last pad",
     "Pin-1 / polarity marked on every polarised part; header legends obvious",
     "Connectors from the library with 3D checked; headers spaced for housings",
+    "Mounting holes plated with keep-out rings; fiducials placed and unobstructed",
+    "Labelled test points on the rails and buses you will probe",
     "Every subsystem in the schematic has a power feed — pneumatics included",
     "Gerber set + drill file verified layer-by-layer in a viewer",
   ],

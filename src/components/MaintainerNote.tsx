@@ -28,7 +28,7 @@ const SCHEMA_SNIPPET = `{
 const STEPS = [
   ["01", "Get collaborator access", "Ask the HW lead to add your GitHub account to the repo. Trainees never need it."],
   ["02", "Edit data/scheme.json", "Use GitHub's web editor or your own clone. Add your standard as a new finding — description plus the why."],
-  ["03", "Drop photos in examples/", "Commit screenshots or fab photos under public/examples/ and point \"image\" at them. Keep files under ~1.5 MB."],
+  ["03", "Drop real photos in examples/", "Commit fab shots, solder joints or 3D renders to public/examples/ — there is a README in that folder — and point \"image\" at e.g. \"examples/joint.jpg\". The card then shows your photo instead of the built-in diagram. Keep files under ~1.5 MB."],
   ["04", "Commit to main", "Pages rebuilds and republishes automatically. Every trainee reads the same guide — no manual sync."],
 ];
 
