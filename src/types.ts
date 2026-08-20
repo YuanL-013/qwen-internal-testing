@@ -1,29 +1,22 @@
 export type Verdict = "pass" | "fail";
 
-export type Severity = "critical" | "major" | "minor";
-
 export interface Example {
   id: string;
   title: string;
-  /** What the reviewer sees in the submission */
-  description: string;
-  /** Why it is approved / why it is not supported */
-  reason: string;
   verdict: Verdict;
-  /** fail only */
-  severity?: Severity;
-  /** fail only — points deducted per occurrence */
-  deduction?: number;
-  /** key into the built-in diagram library */
-  diagram?: string;
-  /** uploaded data-URL or external image URL (overrides diagram) */
-  image?: string;
+  /** What the reviewer (and trainee) is looking at. */
+  description: string;
+  /** Why this pattern is okay / not okay — the part that settles arguments. */
+  reason: string;
   tags: string[];
+  /** Key of a built-in SVG illustration. */
+  diagram?: string;
+  /** Path to a photo/shot committed to the repo (e.g. "examples/pad.jpg") or a URL. */
+  image?: string;
 }
 
 export interface Category {
   id: string;
-  /** short code, e.g. TRC */
   code: string;
   name: string;
   blurb: string;
@@ -34,7 +27,7 @@ export interface SchemeMeta {
   team: string;
   doc: string;
   rev: string;
-  updated: string;
+  updated: string; // ISO yyyy-mm-dd
 }
 
 export interface Scheme {
@@ -42,11 +35,3 @@ export interface Scheme {
   categories: Category[];
   checklist: string[];
 }
-
-export type Toast = {
-  id: number;
-  message: string;
-  tone: "ok" | "warn" | "err";
-  actionLabel?: string;
-  onAction?: () => void;
-};

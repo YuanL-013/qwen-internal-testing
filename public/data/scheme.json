@@ -1,0 +1,248 @@
+{
+  "meta": {
+    "team": "Northbolt Robotics",
+    "doc": "STD-PCB-01",
+    "rev": "C",
+    "updated": "2026-02-12"
+  },
+  "categories": [
+    {
+      "id": "cat-trc",
+      "code": "TRC",
+      "name": "Trace Routing",
+      "blurb": "How copper is drawn decides whether the board etches cleanly and carries its current without turning into a heater.",
+      "examples": [
+        {
+          "id": "ex-45",
+          "title": "45° corners everywhere",
+          "verdict": "pass",
+          "description": "Every change of direction is a 45° mitre or a smooth arc — no net on the board carries a right angle.",
+          "reason": "Right-angle corners trap etchant during fabrication and become impedance bumps on fast signals. 45° corners etch evenly, keep impedance constant and read as intentional work.",
+          "tags": ["routing", "geometry"],
+          "diagram": "corners"
+        },
+        {
+          "id": "ex-netclass",
+          "title": "Net classes, not magic widths",
+          "verdict": "pass",
+          "description": "Power nets run at 0.5 mm, signals at 0.25 mm — widths defined once in net classes, so the DRC catches any violation automatically.",
+          "reason": "Net classes move width rules out of memory and into the DRC. Widths stay consistent across the whole board, and anyone can verify the rule set in one place.",
+          "tags": ["routing", "drc"],
+          "diagram": "netclass"
+        },
+        {
+          "id": "ex-90",
+          "title": "90° corners on traces",
+          "verdict": "fail",
+          "description": "One or more traces turn with a sharp right angle.",
+          "reason": "Acid trap: etchant pools inside the corner and over-etchs the copper, thinning the trace exactly where it bends. On fast signals the corner adds capacitance and reflects energy. Use two 45° segments or an arc instead.",
+          "tags": ["routing", "etching"],
+          "diagram": "corner90"
+        },
+        {
+          "id": "ex-neck",
+          "title": "Neck-downs below class width",
+          "verdict": "fail",
+          "description": "A trace narrows below its class width to squeeze between two pads.",
+          "reason": "The thin segment carries the same current as the rest of the net, so it becomes a fuse: it heats first and can be eaten entirely during etching. If the gap can't be crossed at full width, the neighbouring pads need to move.",
+          "tags": ["routing", "current"],
+          "diagram": "neckdown"
+        }
+      ]
+    },
+    {
+      "id": "cat-pwr",
+      "code": "PWR",
+      "name": "Power & Grounding",
+      "blurb": "Clean power delivery and joints that can actually be soldered — the difference between a board and a paperweight.",
+      "examples": [
+        {
+          "id": "ex-relief",
+          "title": "Thermal relief on plane connections",
+          "verdict": "pass",
+          "description": "Every pad tied into a copper plane connects through four spokes, never solid copper.",
+          "reason": "A solid tie into a big plane drags heat out of the joint faster than the iron can deliver it — the classic cold joint. Spokes keep the electrical connection while letting the pad reach soldering temperature.",
+          "tags": ["soldering", "planes"],
+          "diagram": "relief"
+        },
+        {
+          "id": "ex-stitch",
+          "title": "Ground pour stitched with vias",
+          "verdict": "pass",
+          "description": "Top and bottom ground pours are tied together with stitching vias, placed densely near signal layer changes.",
+          "reason": "Stitching gives return currents a short path home, shrinking loop area and EMI — and stops the two planes resonating against each other at RF.",
+          "tags": ["grounding", "emi"],
+          "diagram": "stitch"
+        },
+        {
+          "id": "ex-viapad",
+          "title": "Via drilled inside an SMD pad",
+          "verdict": "fail",
+          "description": "A via sits directly inside an SMD pad, untented and unplugged.",
+          "reason": "During reflow, molten solder wicks down the via and starves the joint — or the uneven pad makes the part tombstone. Keep vias outside the pad, or use properly tented and plugged via-in-pad.",
+          "tags": ["assembly", "reflow"],
+          "diagram": "viapad"
+        },
+        {
+          "id": "ex-flood",
+          "title": "Copper pour floods a pad",
+          "verdict": "fail",
+          "description": "A ground pour creeps onto a signal pad with zero clearance.",
+          "reason": "That is a short between the pad and the plane — sometimes only visible after assembly, when the board is already populated. Every pour must respect the board clearance rule against every net, no exceptions.",
+          "tags": ["clearance", "shorts"],
+          "diagram": "flood"
+        }
+      ]
+    },
+    {
+      "id": "cat-fpt",
+      "code": "FPT",
+      "name": "Footprints & Packages",
+      "blurb": "The footprint is a promise to the assembly house. Break it and the part simply will not fit.",
+      "examples": [
+        {
+          "id": "ex-lib",
+          "title": "Library footprints, IPC-7351",
+          "verdict": "pass",
+          "description": "Every part uses a footprint from the team library, generated to IPC-7351 density level B.",
+          "reason": "Generated footprints match real part bodies and paste-stencil rules, avoiding the tombstoning and misalignment that hand-drawn pads cause after reflow.",
+          "tags": ["library", "ipc"],
+          "diagram": "footprint"
+        },
+        {
+          "id": "ex-pin1",
+          "title": "Pin 1 and polarity marked",
+          "verdict": "pass",
+          "description": "Every polarised part has a pin-1 dot or triangle on silkscreen, and the matching marker sits on the footprint itself.",
+          "reason": "Assembly — human or pick-and-place — must know orientation with zero doubt. Missing polarity marks are the number-one cause of backwards parts on student boards.",
+          "tags": ["silkscreen", "assembly"],
+          "diagram": "pin1"
+        },
+        {
+          "id": "ex-hand",
+          "title": "Hand-drawn footprint, unverified",
+          "verdict": "fail",
+          "description": "Pads sketched by eye from the datasheet's mechanical drawing.",
+          "reason": "Datasheet package drawings are not PCB pad geometry. Unchecked footprints mean solderability problems discovered only after fabrication. Use the library — or generate the pads, then measure them against the drawing.",
+          "tags": ["library", "risk"],
+          "diagram": "sketchfp"
+        },
+        {
+          "id": "ex-mirror",
+          "title": "Mirrored footprint",
+          "verdict": "fail",
+          "description": "A part drawn as if seen through the board — pads mirrored, silkscreen text backwards.",
+          "reason": "The component physically cannot be placed. This happens when a footprint is edited in the wrong layer view, so flipping the view is the very first thing anyone checks.",
+          "tags": ["layers", "placement"],
+          "diagram": "mirror"
+        }
+      ]
+    },
+    {
+      "id": "cat-sil",
+      "code": "SIL",
+      "name": "Silkscreen & Documentation",
+      "blurb": "The board must be readable by a human holding a soldering iron at 2 a.m. before a competition.",
+      "examples": [
+        {
+          "id": "ex-refdes",
+          "title": "Reference designators outside the body",
+          "verdict": "pass",
+          "description": "Every part is labelled with a reference of at least 1 mm height, placed outside the component body, reading left-to-right or bottom-to-top.",
+          "reason": "Readable references let anyone map a fault from schematic to board in seconds. Labels inside the body get covered by the part anyway — dead ink.",
+          "tags": ["silkscreen", "readability"],
+          "diagram": "refdes"
+        },
+        {
+          "id": "ex-silkpad",
+          "title": "Silkscreen over pads",
+          "verdict": "fail",
+          "description": "Legend lines or text cross exposed copper pads.",
+          "reason": "Ink on a pad stops solder from wetting — opens and weak joints follow. Many fabs silently strip silk from pads, taking your markings with it. Keep all silk at least 0.2 mm from exposed copper.",
+          "tags": ["silkscreen", "soldering"],
+          "diagram": "silkpad"
+        },
+        {
+          "id": "ex-polarity",
+          "title": "Missing or ambiguous polarity",
+          "verdict": "fail",
+          "description": "Diodes, electrolytic caps or connectors carry no visible polarity mark on the assembled side.",
+          "reason": "It forces the assembler to cross-check the schematic for every single part — one wrong guess destroys the board at first power-on.",
+          "tags": ["silkscreen", "assembly"],
+          "diagram": "nopolarity"
+        }
+      ]
+    },
+    {
+      "id": "cat-clr",
+      "code": "CLR",
+      "name": "Clearance & DFM",
+      "blurb": "Respect the fab's minimums and the physics of high voltage — the board has to survive manufacture and the real world.",
+      "examples": [
+        {
+          "id": "ex-drc",
+          "title": "DRC clean at the fab's real limits",
+          "verdict": "pass",
+          "description": "The design passes DRC with zero errors at 0.2 mm clearance / 0.2 mm track — our JLCPCB baseline.",
+          "reason": "A clean DRC at the fab's actual capability is the cheapest insurance that exists. Running it with looser rules just hides failures the fab will find for you, at your expense.",
+          "tags": ["drc", "fab"],
+          "diagram": "drc"
+        },
+        {
+          "id": "ex-sliver",
+          "title": "Copper slivers between pads",
+          "verdict": "fail",
+          "description": "Thin copper splinters left between pads after a pour flood.",
+          "reason": "Slivers can detach during etching and bridge neighbouring pads, or corrode loose months later. Adjust pour clearance and hunt for isolated islands after every flood.",
+          "tags": ["pour", "etching"],
+          "diagram": "sliver"
+        },
+        {
+          "id": "ex-creep",
+          "title": "Creepage violation on HV nets",
+          "verdict": "fail",
+          "description": "Mains or high-voltage nets run closer than the creepage table allows.",
+          "reason": "Too little surface distance lets tracking arcs form across the board over time — a safety failure, not a cosmetic one. HV nets get their own clearance rules and usually a routed slot.",
+          "tags": ["safety", "hv"],
+          "diagram": "creepage"
+        }
+      ]
+    },
+    {
+      "id": "cat-doc",
+      "code": "DOC",
+      "name": "Deliverables",
+      "blurb": "What you hand over, and in what state. A perfect layout with broken outputs is still an incomplete submission.",
+      "examples": [
+        {
+          "id": "ex-gerber",
+          "title": "Gerber set verified in a viewer",
+          "verdict": "pass",
+          "description": "All copper layers, masks, silks, paste, outline and the Excellon drill file exported — then eyeballed layer by layer in a Gerber viewer before zipping.",
+          "reason": "Viewer review catches missing layers, mirrored art and wrong units before the board ships. Most “the fab broke my board” stories start exactly here.",
+          "tags": ["outputs", "review"],
+          "diagram": "gerbers"
+        },
+        {
+          "id": "ex-drill",
+          "title": "Missing or mismatched drill file",
+          "verdict": "fail",
+          "description": "The drill file is absent from the Gerber zip, or drill hits do not line up with the pads.",
+          "reason": "Without the drill data nobody can make holes — or worse, the fab guesses. Re-export the whole set from one CAD session and verify every layer, every time.",
+          "tags": ["outputs", "fab"],
+          "diagram": "drill"
+        }
+      ]
+    }
+  ],
+  "checklist": [
+    "DRC passes with zero errors at 0.2 mm / 0.2 mm",
+    "No right-angle corners or acid traps on any net",
+    "Power nets ≥ 0.5 mm; no neck-downs below class width",
+    "Thermal relief on every pad connected to a plane",
+    "No vias inside untented SMD pads",
+    "Pin-1 / polarity marked on every polarised part",
+    "No silkscreen over pads; every part labelled ≥ 1 mm",
+    "Gerber set + drill file verified layer-by-layer in a viewer"
+  ]
+}

@@ -1,20 +1,11 @@
 import type { Scheme } from "../types";
-import { PASS_MARK, START_SCORE } from "../data/scheme";
-import { IcArrow, IcLock, IcPencil } from "./Icons";
+import { IcArrow, IcChip } from "./Icons";
 import Reveal from "./Reveal";
 
-export default function TitleBlock({
-  scheme,
-  editMode,
-  onStartReview,
-}: {
-  scheme: Scheme;
-  editMode: boolean;
-  onStartReview: () => void;
-}) {
-  const fails = scheme.categories.flatMap((c) =>
-    c.examples.filter((e) => e.verdict === "fail").map((e) => ({ title: e.title, pts: e.deduction ?? 0, code: c.code }))
-  );
+export default function TitleBlock({ scheme, live }: { scheme: Scheme; live: boolean }) {
+  const all = scheme.categories.flatMap((c) => c.examples.map((e) => ({ title: e.title, verdict: e.verdict })));
+  const passes = all.filter((e) => e.verdict === "pass").length;
+  const fails = all.length - passes;
 
   const effective = new Date(scheme.meta.updated + "T00:00:00").toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -27,7 +18,7 @@ export default function TitleBlock({
     ["REV", scheme.meta.rev],
     ["EFFECTIVE", effective.toUpperCase()],
     ["SHEET", "1 OF 1"],
-    ["CLASS", "INTERNAL — HW DIV"],
+    ["AUDIENCE", "TRAINEES + MARKERS"],
   ];
 
   return (
@@ -41,60 +32,47 @@ export default function TitleBlock({
                 <span className="text-edge">///</span>
                 <span className="text-dim">TRAINEE RECRUITMENT</span>
                 <span className="text-edge">///</span>
-                <span className="text-dim">HARDWARE DIVISION</span>
+                <span className="text-dim">HW HOMEWORK — PCB</span>
               </p>
             </Reveal>
             <Reveal delay={90}>
               <h1 className="mt-4 font-display font-bold leading-[0.95] tracking-tight">
-                <span className="block text-[clamp(2.6rem,7vw,4.6rem)] text-ink">PCB HOMEWORK</span>
+                <span className="block text-[clamp(2.6rem,7vw,4.6rem)] text-ink">PCB LAYOUT</span>
                 <span
                   className="block text-[clamp(2.6rem,7vw,4.6rem)]"
                   style={{ WebkitTextStroke: "1.5px #e0955a", color: "transparent" }}
                 >
-                  MARKING SCHEME
+                  STANDARD
                 </span>
               </h1>
             </Reveal>
             <Reveal delay={180}>
               <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-dim">
-                Every submission is reviewed against this document. Study the approved patterns, memorise the
-                rejected ones — each rejected pattern carries a deduction, and the reasons below are exactly what a
-                reviewer will write on your board.
+                One guide for trainees and markers: what is <span className="text-pass">okay</span> on a submission,
+                what is <span className="text-fail">not okay</span>, and why. Study it before you route a single
+                track — how boards are scored stays internal; what is expected of them is written here, in the open.
               </p>
             </Reveal>
             <Reveal delay={260}>
               <div className="mt-6 flex flex-wrap items-center gap-2.5">
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  START <span className="text-copperlt">{START_SCORE} PTS</span>
+                  <span className="text-pass">✓ {passes}</span> APPROVED PATTERNS
                 </span>
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  PASS ≥ <span className="text-pass">{PASS_MARK}</span>
+                  <span className="text-fail">✕ {fails}</span> REJECTED PATTERNS
                 </span>
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  {fails.length} REJECTION PATTERNS
+                  {scheme.categories.length} SECTIONS
                 </span>
                 <a
-                  href="#standard"
+                  href="#guide"
                   className="group ml-1 flex items-center gap-2 border border-copper/50 bg-copper/10 px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-copperlt transition-colors hover:bg-copper hover:text-bg"
                 >
-                  READ THE STANDARD
+                  READ THE GUIDE
                   <span className="transition-transform group-hover:translate-y-0.5">
                     <IcArrow size={13} className="rotate-90" />
                   </span>
                 </a>
-                {!editMode && (
-                  <button
-                    onClick={onStartReview}
-                    className="flex items-center gap-2 border border-edge px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-faint transition-colors hover:border-copper hover:text-copperlt"
-                  >
-                    <IcLock size={13} /> REVIEWER
-                  </button>
-                )}
-                {editMode && (
-                  <span className="flex items-center gap-2 border border-copper/50 px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-copper">
-                    <IcPencil size={13} /> EDITING LIVE
-                  </span>
-                )}
               </div>
             </Reveal>
           </div>
@@ -109,30 +87,34 @@ export default function TitleBlock({
                 </span>
               </div>
               {rows.map(([k, v]) => (
-                <div key={k} className="flex border-b border-edgesoft last:border-b-0">
+                <div key={k} className="flex border-b border-edgesoft">
                   <span className="w-24 border-r border-edgesoft px-3 py-1.5 tracking-[0.18em] text-faint">{k}</span>
                   <span className="flex-1 px-3 py-1.5 tracking-wider text-ink">{v}</span>
                 </div>
               ))}
               <div className="flex">
-                <span className="w-24 border-r border-edgesoft px-3 py-1.5 tracking-[0.18em] text-faint">PREP. BY</span>
-                <span className="flex-1 px-3 py-1.5 tracking-wider text-copperlt">HW LEAD</span>
+                <span className="w-24 border-r border-edgesoft px-3 py-1.5 tracking-[0.18em] text-faint">DATA</span>
+                <span className="flex flex-1 items-center gap-1.5 px-3 py-1.5 tracking-wider">
+                  <span className={`h-1.5 w-1.5 rounded-full ${live ? "led bg-pass" : "bg-warn"}`} />
+                  <span className={live ? "text-pass" : "text-warn"}>{live ? "LIVE · REPO" : "BUILT-IN SNAPSHOT"}</span>
+                </span>
               </div>
             </div>
           </Reveal>
         </div>
       </div>
 
-      {/* rejected-patterns ticker */}
+      {/* pattern ticker — standards only, no scoring */}
       <div className="ticker relative overflow-hidden border-t border-edge bg-panel/70 py-2">
         <div className="ticker-track">
           {[0, 1].map((dup) => (
             <div key={dup} className="flex shrink-0 items-center" aria-hidden={dup === 1}>
-              {fails.map((f, i) => (
+              {all.map((e, i) => (
                 <span key={`${dup}-${i}`} className="flex items-center font-mono text-[11px] tracking-[0.14em]">
-                  <span className="px-4 text-fail">✕ {f.title.toUpperCase()}</span>
-                  <span className="text-faildim">−{f.pts} PTS</span>
-                  <span className="pl-4 text-edge">///</span>
+                  <span className={`px-4 ${e.verdict === "pass" ? "text-pass" : "text-fail"}`}>
+                    {e.verdict === "pass" ? "✓" : "✕"} {e.title.toUpperCase()}
+                  </span>
+                  <span className="text-edge">///</span>
                 </span>
               ))}
             </div>
@@ -140,6 +122,27 @@ export default function TitleBlock({
         </div>
         <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-bg to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-bg to-transparent" />
+      </div>
+    </header>
+  );
+}
+
+export function TitleBlockSkeleton() {
+  return (
+    <header className="border-b border-edge">
+      <div className="mx-auto max-w-6xl px-5 pb-10 pt-12 lg:px-8 lg:pt-16">
+        <p className="flex items-center gap-3 font-mono text-[11px] tracking-[0.28em] text-copper">
+          <span className="led h-1.5 w-1.5 rounded-full bg-copper" /> READING GUIDE DATA…
+        </p>
+        <div className="mt-5 flex items-center gap-4">
+          <span className="text-raise">
+            <IcChip size={34} />
+          </span>
+          <div className="space-y-2.5">
+            <div className="h-6 w-64 bg-raise" />
+            <div className="h-3 w-44 bg-raise" />
+          </div>
+        </div>
       </div>
     </header>
   );

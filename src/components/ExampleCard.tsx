@@ -1,6 +1,6 @@
 import type { Example } from "../types";
 import { DIAGRAMS } from "./Diagrams";
-import { IcChip, IcPencil, IcTrash } from "./Icons";
+import { IcChip } from "./Icons";
 import Reveal from "./Reveal";
 
 function Ticks() {
@@ -19,18 +19,12 @@ export default function ExampleCard({
   example,
   code,
   index,
-  editable,
   delay = 0,
-  onEdit,
-  onDelete,
 }: {
   example: Example;
   code: string;
   index: number;
-  editable: boolean;
   delay?: number;
-  onEdit: () => void;
-  onDelete: () => void;
 }) {
   const pass = example.verdict === "pass";
   const Diagram = example.diagram ? DIAGRAMS[example.diagram] : null;
@@ -60,13 +54,13 @@ export default function ExampleCard({
                 <IcChip size={26} />
               </div>
             )}
-            {/* stamp */}
+            {/* verdict stamp */}
             <span
               className={`absolute right-2.5 top-2.5 -rotate-6 border-2 px-2 py-0.5 font-display text-[12px] font-bold tracking-[0.22em] backdrop-blur-[2px] transition-transform duration-300 group-hover:-rotate-2 ${
                 pass ? "border-pass/80 bg-bg/60 text-pass" : "border-fail/80 bg-bg/60 text-fail"
               }`}
             >
-              {pass ? "APPROVED" : "REJECTED"}
+              {pass ? "OKAY" : "NOT OKAY"}
             </span>
           </div>
         </div>
@@ -77,28 +71,11 @@ export default function ExampleCard({
             <span className="font-mono text-[10px] tracking-[0.2em] text-faint">
               {code}-{String(index + 1).padStart(2, "0")}
             </span>
-            {pass ? (
-              <span className="ml-auto font-mono text-[10px] tracking-[0.16em] text-pass/90">
-                REQUIRED STANDARD · NO BONUS
-              </span>
-            ) : (
-              <>
-                <span
-                  className={`border px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-[0.18em] ${
-                    example.severity === "critical"
-                      ? "border-fail/50 bg-fail/10 text-fail"
-                      : example.severity === "major"
-                        ? "border-warn/50 bg-warn/10 text-warn"
-                        : "border-info/50 bg-info/10 text-info"
-                  }`}
-                >
-                  {(example.severity ?? "major").toUpperCase()}
-                </span>
-                <span className="ml-auto font-mono text-[11px] font-semibold tracking-[0.12em] text-fail">
-                  −{example.deduction ?? 0} PTS / OCC.
-                </span>
-              </>
-            )}
+            <span
+              className={`ml-auto font-mono text-[10px] tracking-[0.16em] ${pass ? "text-pass/90" : "text-fail/90"}`}
+            >
+              {pass ? "DO THIS" : "NEVER THIS"}
+            </span>
           </div>
 
           <h3 className="mt-2 font-display text-[17px] font-bold leading-snug tracking-wide text-ink">
@@ -108,7 +85,7 @@ export default function ExampleCard({
 
           <div className={`mt-3 border-l-2 pl-3 ${pass ? "border-pass/60" : "border-fail/60"}`}>
             <p className={`font-mono text-[9.5px] tracking-[0.24em] ${pass ? "text-pass/80" : "text-fail/80"}`}>
-              {pass ? "WHY IT PASSES" : "WHY IT IS NOT SUPPORTED"}
+              {pass ? "WHY IT'S OKAY" : "WHY IT'S NOT OKAY"}
             </p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-ink/85">{example.reason}</p>
           </div>
@@ -123,24 +100,6 @@ export default function ExampleCard({
             </div>
           )}
         </div>
-
-        {/* edit controls */}
-        {editable && (
-          <div className="absolute left-2.5 top-2.5 z-10 flex gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-1 border border-edge bg-bg/90 px-2 py-1 font-mono text-[9.5px] tracking-[0.14em] text-copperlt hover:border-copper"
-            >
-              <IcPencil size={11} /> EDIT
-            </button>
-            <button
-              onClick={onDelete}
-              className="flex items-center gap-1 border border-edge bg-bg/90 px-2 py-1 font-mono text-[9.5px] tracking-[0.14em] text-fail hover:border-fail"
-            >
-              <IcTrash size={11} /> DEL
-            </button>
-          </div>
-        )}
       </article>
     </Reveal>
   );

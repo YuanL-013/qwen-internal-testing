@@ -1,38 +1,4 @@
-import type { Scheme, Severity } from "../types";
-
-export const START_SCORE = 100;
-export const PASS_MARK = 70;
-
-export const SEVERITIES: Record<
-  Severity,
-  { label: string; pts: number; tone: string; desc: string }
-> = {
-  critical: {
-    label: "Critical",
-    pts: 10,
-    tone: "fail",
-    desc: "Board cannot be fabricated, assembled or trusted. Deducted per occurrence.",
-  },
-  major: {
-    label: "Major",
-    pts: 5,
-    tone: "warn",
-    desc: "Reliability or assembly risk that will bite in the field. Deducted per occurrence.",
-  },
-  minor: {
-    label: "Minor",
-    pts: 2,
-    tone: "info",
-    desc: "Craftsmanship slip. Fixable in minutes, but it still counts.",
-  },
-};
-
-export const BANDS = [
-  { min: 85, max: 100, label: "Distinction", note: "Offer extended + HW division fast-track", tone: "#55d78e" },
-  { min: 70, max: 84, label: "Pass", note: "Minor rework, then onboarding", tone: "#f0cd8d" },
-  { min: 50, max: 69, label: "Resubmit", note: "One revision cycle with mentor feedback", tone: "#f0b453" },
-  { min: 0, max: 49, label: "Not passed", note: "Re-apply next recruitment cycle", tone: "#f2685e" },
-];
+import type { Scheme } from "../types";
 
 const ex = (
   id: string,
@@ -40,13 +6,18 @@ const ex = (
   description: string,
   reason: string,
   verdict: "pass" | "fail",
-  extra: Partial<{ severity: Severity; deduction: number; diagram: string; tags: string[] }> = {}
+  extra: Partial<{ diagram: string; tags: string[] }> = {}
 ) => ({ id, title, description, reason, verdict, tags: [] as string[], ...extra });
 
+/**
+ * Built-in snapshot of the guide. The live source of truth for the deployed
+ * site is public/data/scheme.json, edited by reviewers with repo access.
+ * This file is only the fallback when that file cannot be fetched.
+ */
 export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "Northbolt Robotics",
-    doc: "PCB-QA-01",
+    doc: "STD-PCB-01",
     rev: "C",
     updated: "2026-02-12",
   },
@@ -70,7 +41,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "ex-netclass",
           "Net classes, not magic widths",
           "Power nets run at 0.5 mm, signals at 0.25 mm — widths defined once in net classes, so the DRC catches any violation automatically.",
-          "Net classes move width rules out of memory and into the DRC. Widths stay consistent across the whole board, and a reviewer can verify the rule set in one place.",
+          "Net classes move width rules out of memory and into the DRC. Widths stay consistent across the whole board, and anyone can verify the rule set in one place.",
           "pass",
           { diagram: "netclass", tags: ["routing", "drc"] }
         ),
@@ -80,7 +51,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "One or more traces turn with a sharp right angle.",
           "Acid trap: etchant pools inside the corner and over-etchs the copper, thinning the trace exactly where it bends. On fast signals the corner adds capacitance and reflects energy. Use two 45° segments or an arc instead.",
           "fail",
-          { severity: "critical", deduction: 10, diagram: "corner90", tags: ["routing", "etching"] }
+          { diagram: "corner90", tags: ["routing", "etching"] }
         ),
         ex(
           "ex-neck",
@@ -88,7 +59,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "A trace narrows below its class width to squeeze between two pads.",
           "The thin segment carries the same current as the rest of the net, so it becomes a fuse: it heats first and can be eaten entirely during etching. If the gap can't be crossed at full width, the neighbouring pads need to move.",
           "fail",
-          { severity: "major", deduction: 5, diagram: "neckdown", tags: ["routing", "current"] }
+          { diagram: "neckdown", tags: ["routing", "current"] }
         ),
       ],
     },
@@ -121,7 +92,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "A via sits directly inside an SMD pad, untented and unplugged.",
           "During reflow, molten solder wicks down the via and starves the joint — or the uneven pad makes the part tombstone. Keep vias outside the pad, or use properly tented and plugged via-in-pad.",
           "fail",
-          { severity: "major", deduction: 5, diagram: "viapad", tags: ["assembly", "reflow"] }
+          { diagram: "viapad", tags: ["assembly", "reflow"] }
         ),
         ex(
           "ex-flood",
@@ -129,7 +100,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "A ground pour creeps onto a signal pad with zero clearance.",
           "That is a short between the pad and the plane — sometimes only visible after assembly, when the board is already populated. Every pour must respect the board clearance rule against every net, no exceptions.",
           "fail",
-          { severity: "critical", deduction: 10, diagram: "flood", tags: ["clearance", "shorts"] }
+          { diagram: "flood", tags: ["clearance", "shorts"] }
         ),
       ],
     },
@@ -162,15 +133,15 @@ export const DEFAULT_SCHEME: Scheme = {
           "Pads sketched by eye from the datasheet's mechanical drawing.",
           "Datasheet package drawings are not PCB pad geometry. Unchecked footprints mean solderability problems discovered only after fabrication. Use the library — or generate the pads, then measure them against the drawing.",
           "fail",
-          { severity: "major", deduction: 5, diagram: "sketchfp", tags: ["library", "risk"] }
+          { diagram: "sketchfp", tags: ["library", "risk"] }
         ),
         ex(
           "ex-mirror",
           "Mirrored footprint",
           "A part drawn as if seen through the board — pads mirrored, silkscreen text backwards.",
-          "The component physically cannot be placed. This happens when a footprint is edited in the wrong layer view, so flipping the view is the very first thing a reviewer checks.",
+          "The component physically cannot be placed. This happens when a footprint is edited in the wrong layer view, so flipping the view is the very first thing anyone checks.",
           "fail",
-          { severity: "critical", deduction: 10, diagram: "mirror", tags: ["layers", "placement"] }
+          { diagram: "mirror", tags: ["layers", "placement"] }
         ),
       ],
     },
@@ -195,7 +166,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "Legend lines or text cross exposed copper pads.",
           "Ink on a pad stops solder from wetting — opens and weak joints follow. Many fabs silently strip silk from pads, taking your markings with it. Keep all silk at least 0.2 mm from exposed copper.",
           "fail",
-          { severity: "major", deduction: 5, diagram: "silkpad", tags: ["silkscreen", "soldering"] }
+          { diagram: "silkpad", tags: ["silkscreen", "soldering"] }
         ),
         ex(
           "ex-polarity",
@@ -203,7 +174,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "Diodes, electrolytic caps or connectors carry no visible polarity mark on the assembled side.",
           "It forces the assembler to cross-check the schematic for every single part — and one wrong guess destroys the board at first power-on.",
           "fail",
-          { severity: "minor", deduction: 2, diagram: "nopolarity", tags: ["silkscreen", "assembly"] }
+          { diagram: "nopolarity", tags: ["silkscreen", "assembly"] }
         ),
       ],
     },
@@ -228,7 +199,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "Thin copper splinters left between pads after a pour flood.",
           "Slivers can detach during etching and bridge neighbouring pads, or corrode loose months later. Adjust pour clearance and hunt for isolated islands after every flood.",
           "fail",
-          { severity: "major", deduction: 5, diagram: "sliver", tags: ["pour", "etching"] }
+          { diagram: "sliver", tags: ["pour", "etching"] }
         ),
         ex(
           "ex-creep",
@@ -236,7 +207,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "Mains or high-voltage nets run closer than the creepage table allows.",
           "Too little surface distance lets tracking arcs form across the board over time — a safety failure, not a cosmetic one. HV nets get their own clearance rules and usually a routed slot.",
           "fail",
-          { severity: "critical", deduction: 10, diagram: "creepage", tags: ["safety", "hv"] }
+          { diagram: "creepage", tags: ["safety", "hv"] }
         ),
       ],
     },
@@ -245,7 +216,7 @@ export const DEFAULT_SCHEME: Scheme = {
       code: "DOC",
       name: "Deliverables",
       blurb:
-        "What you hand over, and in what state. A perfect layout with broken outputs still scores zero.",
+        "What you hand over, and in what state. A perfect layout with broken outputs is still an incomplete submission.",
       examples: [
         ex(
           "ex-gerber",
@@ -259,9 +230,9 @@ export const DEFAULT_SCHEME: Scheme = {
           "ex-drill",
           "Missing or mismatched drill file",
           "The drill file is absent from the Gerber zip, or drill hits do not line up with the pads.",
-          "Without the drill data the fab cannot make holes — or worse, guesses. Re-export the whole set from one CAD session and verify every layer, every time.",
+          "Without the drill data nobody can make holes — or worse, the fab guesses. Re-export the whole set from one CAD session and verify every layer, every time.",
           "fail",
-          { severity: "critical", deduction: 10, diagram: "drill", tags: ["outputs", "fab"] }
+          { diagram: "drill", tags: ["outputs", "fab"] }
         ),
       ],
     },

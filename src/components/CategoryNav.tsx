@@ -1,5 +1,5 @@
 import type { Category, Verdict } from "../types";
-import { IcPlus, IcSearch, IcX } from "./Icons";
+import { IcSearch, IcX } from "./Icons";
 
 export type VerdictFilter = "all" | Verdict;
 
@@ -11,8 +11,6 @@ export default function CategoryNav({
   onVerdict,
   query,
   onQuery,
-  editMode,
-  onAddCategory,
 }: {
   categories: Category[];
   active: string;
@@ -21,8 +19,6 @@ export default function CategoryNav({
   onVerdict: (v: VerdictFilter) => void;
   query: string;
   onQuery: (q: string) => void;
-  editMode: boolean;
-  onAddCategory: () => void;
 }) {
   const tab = (id: string, label: string) => (
     <button
@@ -51,27 +47,16 @@ export default function CategoryNav({
   );
 
   return (
-    <div
-      className={`sticky z-40 border-b border-edge bg-bg/95 backdrop-blur-sm ${editMode ? "top-12" : "top-0"}`}
-      id="standard"
-    >
+    <div className="sticky top-0 z-40 border-b border-edge bg-bg/95 backdrop-blur-sm" id="standard">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 lg:px-8">
         <div className="flex flex-wrap items-center gap-1.5">
           {tab("all", "ALL")}
           {categories.map((c) => tab(c.id, c.code))}
-          {editMode && (
-            <button
-              onClick={onAddCategory}
-              className="flex items-center gap-1 border border-dashed border-copper/50 px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] text-copper transition-colors hover:bg-copper/10"
-            >
-              <IcPlus size={12} /> CATEGORY
-            </button>
-          )}
         </div>
 
         <div className="flex items-center border border-edge">
           {vBtn("all", "ALL")}
-          {vBtn("pass", "✓ APPROVED", "bg-pass/20 text-pass")}
+          {vBtn("pass", "✓ OKAY", "bg-pass/20 text-pass")}
           {vBtn("fail", "✕ NOT OKAY", "bg-fail/20 text-fail")}
         </div>
 
@@ -82,7 +67,7 @@ export default function CategoryNav({
           <input
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder="Search findings, reasons, tags…"
+            placeholder="Search patterns, reasons, tags…"
             className="w-full border border-edge bg-panel py-1.5 pl-9 pr-8 text-[13px] text-ink placeholder:text-faint focus:border-copper focus:outline-none transition-colors"
           />
           {query && (
