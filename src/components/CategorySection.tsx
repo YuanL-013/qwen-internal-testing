@@ -33,7 +33,7 @@ export default function CategorySection({ category, index }: { category: Categor
         {category.examples.length === 0 ? (
           <div className="mt-8 border border-dashed border-edge py-14 text-center">
             <p className="font-mono text-[11px] tracking-[0.22em] text-faint">
-              NO PATTERNS DOCUMENTED YET — PROPOSE SOME IN THE REPO
+              NOTHING HERE YET
             </p>
           </div>
         ) : (

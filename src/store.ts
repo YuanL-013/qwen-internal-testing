@@ -15,7 +15,18 @@ function normalizeScheme(raw: unknown): Scheme {
   const r = raw as Partial<Scheme>;
   return {
     meta: { ...base.meta, ...(r.meta ?? {}) },
-    categories: Array.isArray(r.categories) ? (r.categories as Scheme["categories"]) : base.categories,
+    categories: Array.isArray(r.categories)
+      ? (r.categories as Scheme["categories"]).map((c) => ({
+          ...c,
+          examples: Array.isArray(c.examples)
+            ? c.examples.map((e) => ({
+                ...e,
+                tags: Array.isArray(e.tags) ? e.tags : [],
+                verdict: e.verdict === "pass" ? ("pass" as const) : ("fail" as const),
+              }))
+            : [],
+        }))
+      : base.categories,
     checklist: Array.isArray(r.checklist) && r.checklist.length ? (r.checklist as string[]) : base.checklist,
   };
 }

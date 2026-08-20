@@ -636,13 +636,13 @@ const TestPts = () => {
 const Teardrop = () => (
   <Mini caption="TEARDROPS AT PADS">
     <path d="M 78 60 H 198" stroke={CU} strokeWidth="9" />
-    <path d="M 76 60 L 112 48 L 112 72 Z" fill={CU} />
+    <path d="M 114 60 L 79 51 L 79 69 Z" fill={CU} />
     <ThPad x={70} y={60} />
-    <Callout x={98} y={60} r={24} tone={GOOD} />
+    <Callout x={97} y={60} r={25} tone={GOOD} />
     <ThPad x={168} y={28} />
-    <path d="M 176 28 H 204" stroke={CU} strokeWidth="9" />
+    <path d="M 177 28 H 204" stroke={CU} strokeWidth="9" />
     <Lbl x={164} y={14} tone={BAD} size={7}>no flare — lifts</Lbl>
-    <Lbl x={110} y={102} tone={GOOD} size={7.5}>drill shock spreads into the copper</Lbl>
+    <Lbl x={112} y={102} tone={GOOD} size={7.5}>copper flares out into the pad</Lbl>
     <Mark x={36} y={100} ok />
   </Mini>
 );

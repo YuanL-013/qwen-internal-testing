@@ -1,6 +1,7 @@
+import { useState } from "react";
 import type { Example } from "../types";
 import { DIAGRAMS } from "./Diagrams";
-import { IcChip } from "./Icons";
+import { IcChevD, IcChip, IcImage } from "./Icons";
 import Reveal from "./Reveal";
 
 function Ticks() {
@@ -28,6 +29,7 @@ export default function ExampleCard({
 }) {
   const pass = example.verdict === "pass";
   const Diagram = example.diagram ? DIAGRAMS[example.diagram] : null;
+  const [open, setOpen] = useState(false);
 
   return (
     <Reveal delay={delay}>
@@ -55,18 +57,10 @@ export default function ExampleCard({
               </div>
             )}
             {example.image && (
-              <span className="absolute left-2.5 top-2.5 border border-copper/70 bg-bg/75 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.2em] text-copperlt backdrop-blur-[2px]">
-                REAL PHOTO
+              <span className="absolute left-2.5 top-2.5 flex items-center gap-1 border border-edge bg-bg/80 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.18em] text-copperlt backdrop-blur-[2px]">
+                <IcImage size={10} /> REAL PHOTO
               </span>
             )}
-            {/* verdict stamp */}
-            <span
-              className={`absolute right-2.5 top-2.5 -rotate-6 border-2 px-2 py-0.5 font-display text-[12px] font-bold tracking-[0.22em] backdrop-blur-[2px] transition-transform duration-300 group-hover:-rotate-2 ${
-                pass ? "border-pass/80 bg-bg/60 text-pass" : "border-fail/80 bg-bg/60 text-fail"
-              }`}
-            >
-              {pass ? "OKAY" : "NOT OKAY"}
-            </span>
           </div>
         </div>
 
@@ -88,12 +82,40 @@ export default function ExampleCard({
           </h3>
           <p className="mt-1.5 text-[13px] leading-relaxed text-dim">{example.description}</p>
 
-          <div className={`mt-3 border-l-2 pl-3 ${pass ? "border-pass/60" : "border-fail/60"}`}>
-            <p className={`font-mono text-[9.5px] tracking-[0.24em] ${pass ? "text-pass/80" : "text-fail/80"}`}>
-              {pass ? "WHY IT'S OKAY" : "WHY IT'S NOT OKAY"}
-            </p>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-ink/85">{example.reason}</p>
-          </div>
+          {/* collapsible reason */}
+          {example.reason && (
+            <div className="mt-3">
+              <button
+                onClick={() => setOpen((o) => !o)}
+                aria-expanded={open}
+                className={`flex w-full items-center gap-2 border-l-2 py-1.5 pl-3 pr-1 text-left transition-colors ${
+                  pass
+                    ? "border-pass/60 hover:bg-pass/5"
+                    : "border-fail/60 hover:bg-fail/5"
+                }`}
+              >
+                <span className={`font-mono text-[9.5px] tracking-[0.24em] ${pass ? "text-pass/80" : "text-fail/80"}`}>
+                  {pass ? "WHY THIS WORKS" : "WHY THIS FAILS"}
+                </span>
+                <span
+                  className={`ml-auto shrink-0 text-faint transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+                >
+                  <IcChevD size={13} />
+                </span>
+              </button>
+              <div
+                className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                  open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <p className={`border-l-2 pl-3 pt-2 text-[12.5px] leading-relaxed text-ink/85 ${pass ? "border-pass/60" : "border-fail/60"}`}>
+                    {example.reason}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {example.tags.length > 0 && (
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3.5">

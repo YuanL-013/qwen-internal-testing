@@ -8,7 +8,7 @@ import GuideLegend from "./components/GuideLegend";
 import CategoryNav, { type VerdictFilter } from "./components/CategoryNav";
 import CategorySection from "./components/CategorySection";
 import Checklist from "./components/Checklist";
-import MaintainerNote from "./components/MaintainerNote";
+
 import Reveal from "./components/Reveal";
 import { IcSearch } from "./components/Icons";
 
@@ -124,8 +124,6 @@ export default function App() {
 
       <Checklist items={scheme.checklist} />
 
-      <MaintainerNote />
-
       <footer className="border-t border-edge">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-5 py-8 lg:px-8">
           <div className="flex items-center gap-2.5">
@@ -146,7 +144,7 @@ export default function App() {
           </a>
           <Reveal className="ml-auto">
             <span className="font-mono text-[10px] tracking-[0.18em] text-faint">
-              STANDARDS ARE PUBLIC. <span className="text-copper/70">SCORING IS NOT.</span>
+              WHAT WE EXPECT, <span className="text-copper/70">WRITTEN DOWN.</span>
             </span>
           </Reveal>
         </div>

@@ -1,5 +1,5 @@
 import type { Scheme } from "../types";
-import { IcArrow, IcChip } from "./Icons";
+import { IcArrow } from "./Icons";
 import Reveal from "./Reveal";
 
 const DATA_STATE = {
@@ -31,7 +31,7 @@ export default function TitleBlock({
     ["REV", scheme.meta.rev],
     ["EFFECTIVE", effective.toUpperCase()],
     ["SHEET", "1 OF 1"],
-    ["AUDIENCE", "TRAINEES + MARKERS"],
+    ["OWNER", "HW TEAM"],
   ];
 
   return (
@@ -45,40 +45,41 @@ export default function TitleBlock({
                 <span className="text-edge">///</span>
                 <span className="text-dim">TRAINEE RECRUITMENT</span>
                 <span className="text-edge">///</span>
-                <span className="text-dim">HW HOMEWORK — PCB</span>
+                <span className="text-dim">HARDWARE DIVISION</span>
               </p>
             </Reveal>
             <Reveal delay={90}>
               <h1 className="mt-4 font-display font-bold leading-[0.95] tracking-tight">
-                <span className="block text-[clamp(2.6rem,7vw,4.6rem)] text-ink">PCB LAYOUT</span>
+                <span className="block text-[clamp(2.6rem,7vw,4.6rem)] text-ink">PCB HOMEWORK</span>
                 <span
                   className="block text-[clamp(2.6rem,7vw,4.6rem)]"
                   style={{ WebkitTextStroke: "1.5px #e0955a", color: "transparent" }}
                 >
-                  STANDARD
+                  DESIGN GUIDE
                 </span>
               </h1>
             </Reveal>
             <Reveal delay={180}>
               <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-dim">
-                One guide for trainees and markers: what is <span className="text-pass">okay</span> on a submission,
-                what is <span className="text-fail">not okay</span>, and why. Study it before you route a single
-                track — how boards are scored stays internal; what is expected of them is written here, in the open.
+                Everything on this page came from boards we actually built — what held up and what bit back.{" "}
+                <span className="text-pass">Green is what we do.</span>{" "}
+                <span className="text-fail">Red is what we don't.</span> And every card tells you why. Read it before
+                you route a single trace.
               </p>
             </Reveal>
             <Reveal delay={260}>
               <div className="mt-6 flex flex-wrap items-center gap-2.5">
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  <span className="text-pass">✓ {passes}</span> APPROVED PATTERNS
+                  <span className="text-pass">{passes}</span> DO THIS
                 </span>
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  <span className="text-fail">✕ {fails}</span> REJECTED PATTERNS
+                  <span className="text-fail">{fails}</span> NEVER THIS
                 </span>
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  {scheme.categories.length} SECTIONS
+                  <span className="text-copperlt">{scheme.categories.length}</span> TOPICS
                 </span>
                 <a
-                  href="#guide"
+                  href="#standard"
                   className="group ml-1 flex items-center gap-2 border border-copper/50 bg-copper/10 px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-copperlt transition-colors hover:bg-copper hover:text-bg"
                 >
                   READ THE GUIDE
@@ -111,9 +112,9 @@ export default function TitleBlock({
                   className="flex flex-1 cursor-help items-center gap-1.5 px-3 py-1.5 tracking-wider"
                   title={
                     source === "stale"
-                      ? "data/scheme.json in this build is an older revision than the app — serving the compiled content instead."
+                      ? "The committed data file is an older revision than this build — serving the compiled content instead."
                       : source === "live"
-                        ? "Content loaded from data/scheme.json (reviewer-maintained)."
+                        ? "Content loaded from data/scheme.json."
                         : "No committed data file found — serving the revision compiled into this build."
                   }
                 >
@@ -131,10 +132,10 @@ export default function TitleBlock({
         <div className="ticker-track">
           {[0, 1].map((dup) => (
             <div key={dup} className="flex shrink-0 items-center" aria-hidden={dup === 1}>
-              {all.map((e, i) => (
+              {all.map((f, i) => (
                 <span key={`${dup}-${i}`} className="flex items-center font-mono text-[11px] tracking-[0.14em]">
-                  <span className={`px-4 ${e.verdict === "pass" ? "text-pass" : "text-fail"}`}>
-                    {e.verdict === "pass" ? "✓" : "✕"} {e.title.toUpperCase()}
+                  <span className={`px-4 ${f.verdict === "pass" ? "text-pass/80" : "text-fail/80"}`}>
+                    {f.verdict === "pass" ? "✓" : "✕"} {f.title.toUpperCase()}
                   </span>
                   <span className="text-edge">///</span>
                 </span>
@@ -151,20 +152,12 @@ export default function TitleBlock({
 
 export function TitleBlockSkeleton() {
   return (
-    <header className="border-b border-edge">
-      <div className="mx-auto max-w-6xl px-5 pb-10 pt-12 lg:px-8 lg:pt-16">
-        <p className="flex items-center gap-3 font-mono text-[11px] tracking-[0.28em] text-copper">
-          <span className="led h-1.5 w-1.5 rounded-full bg-copper" /> READING GUIDE DATA…
-        </p>
-        <div className="mt-5 flex items-center gap-4">
-          <span className="text-raise">
-            <IcChip size={34} />
-          </span>
-          <div className="space-y-2.5">
-            <div className="h-6 w-64 bg-raise" />
-            <div className="h-3 w-44 bg-raise" />
-          </div>
-        </div>
+    <header className="relative border-b border-edge">
+      <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
+        <div className="h-4 w-64 animate-pulse bg-raise" />
+        <div className="mt-5 h-14 w-[18rem] max-w-full animate-pulse bg-raise" />
+        <div className="mt-3 h-14 w-[15rem] max-w-full animate-pulse bg-raise" />
+        <div className="mt-6 h-4 w-96 max-w-full animate-pulse bg-raise" />
       </div>
     </header>
   );
