@@ -119,7 +119,7 @@
           "description": "Top and bottom ground pours are tied together with stitching vias — thickly near anywhere a signal swaps layers.",
           "reason": "With a wider polygon pour, the current density is lower, which reduces the voltage drop and heat generation. It also provides a larger area for heat dissipation and improves the overall reliability of the power rail.",
           "tags": ["planes", "power"],
-          "diagram": "examples/polygon-pour.png"
+          "image": "examples/polygon-pour.png"
         },
         {
           "id": "ex-decap-one",
