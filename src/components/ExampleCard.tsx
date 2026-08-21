@@ -1,20 +1,8 @@
 import { useState } from "react";
 import type { Example } from "../types";
-import { DIAGRAMS } from "./Diagrams";
+import { DIAGRAMS, RedTone } from "./Diagrams";
 import { IcChevD, IcChip, IcImage } from "./Icons";
 import Reveal from "./Reveal";
-
-function Ticks() {
-  const c = "absolute h-3 w-3 border-copper/60";
-  return (
-    <>
-      <span className={`${c} left-1.5 top-1.5 border-l-2 border-t-2`} />
-      <span className={`${c} right-1.5 top-1.5 border-r-2 border-t-2`} />
-      <span className={`${c} bottom-1.5 left-1.5 border-b-2 border-l-2`} />
-      <span className={`${c} bottom-1.5 right-1.5 border-b-2 border-r-2`} />
-    </>
-  );
-}
 
 export default function ExampleCard({
   example,
@@ -36,14 +24,15 @@ export default function ExampleCard({
   return (
     <Reveal delay={delay}>
       <article
-        className={`group relative flex h-full flex-col border bg-panel/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
-          pass ? "border-passdim/60 hover:border-pass/60" : "border-faildim/60 hover:border-fail/60"
+        className={`group relative flex h-full flex-col border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 ${
+          pass
+            ? "border-passdim/60 bg-panel/80 hover:border-pass/60"
+            : "border-faildim/60 bg-paneled/80 hover:border-fail/60"
         }`}
       >
         {/* visual */}
         <div className="relative p-3 pb-0">
           <div className="relative">
-            <Ticks />
             {showImage ? (
               <img
                 src={example.image}
@@ -53,7 +42,13 @@ export default function ExampleCard({
                 style={{ aspectRatio: "5/3" }}
               />
             ) : Diagram ? (
-              <Diagram />
+              pass ? (
+                <Diagram />
+              ) : (
+                <RedTone>
+                  <Diagram />
+                </RedTone>
+              )
             ) : (
               <div className="flex items-center justify-center border border-edgesoft bg-bg py-10 text-faint">
                 <IcChip size={26} />
@@ -73,6 +68,14 @@ export default function ExampleCard({
             <span className="font-mono text-[10px] tracking-[0.2em] text-faint">
               {code}-{String(index + 1).padStart(2, "0")}
             </span>
+            {example.level === "advanced" && (
+              <span
+                className="border border-copper/50 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.18em] text-copperlt"
+                title="A bit advanced — assumes you know the basics. Read it when you're ready."
+              >
+                PRO
+              </span>
+            )}
             <span
               className={`ml-auto font-mono text-[10px] tracking-[0.16em] ${pass ? "text-pass/90" : "text-fail/90"}`}
             >

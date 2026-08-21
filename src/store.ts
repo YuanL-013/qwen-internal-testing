@@ -28,6 +28,7 @@ function normalizeScheme(raw: unknown): Scheme {
         }))
       : base.categories,
     checklist: Array.isArray(r.checklist) && r.checklist.length ? (r.checklist as string[]) : base.checklist,
+    readings: Array.isArray(r.readings) && r.readings.length ? (r.readings as Scheme["readings"]) : base.readings,
   };
 }
 
@@ -41,7 +42,11 @@ export function revRank(rev: string): number {
 
 export async function fetchCommittedScheme(): Promise<Scheme | null> {
   try {
-    const res = await fetch(`${import.meta.env.BASE_URL}data/scheme.json`, { cache: "no-store" });
+    // Unique query per load defeats any intermediate/preview cache of the JSON
+    // (GitHub Pages ignores the query for static files, so it is safe there too).
+    const res = await fetch(`${import.meta.env.BASE_URL}data/scheme.json?v=${Date.now()}`, {
+      cache: "no-store",
+    });
     if (!res.ok) return null;
     return normalizeScheme(await res.json());
   } catch {

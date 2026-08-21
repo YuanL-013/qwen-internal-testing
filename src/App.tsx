@@ -8,6 +8,9 @@ import GuideLegend from "./components/GuideLegend";
 import CategoryNav, { type VerdictFilter } from "./components/CategoryNav";
 import CategorySection from "./components/CategorySection";
 import Checklist from "./components/Checklist";
+import Readings from "./components/Readings";
+import Credit from "./components/Credit";
+import Glossary from "./components/Glossary";
 
 import Reveal from "./components/Reveal";
 import { IcSearch } from "./components/Icons";
@@ -90,7 +93,7 @@ export default function App() {
 
       <TitleBlock scheme={scheme} source={source} />
 
-      <GuideLegend />
+      <Glossary />
 
       <CategoryNav
         categories={scheme.categories.filter((c) => !c.hidden)}
@@ -129,6 +132,8 @@ export default function App() {
 
       <Checklist items={scheme.checklist} />
 
+      <Readings groups={scheme.readings ?? []} />
+
       <footer className="border-t border-edge">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-5 py-8 lg:px-8">
           <div className="flex items-center gap-2.5">
@@ -144,19 +149,15 @@ export default function App() {
           <span className="font-mono text-[10.5px] tracking-[0.18em] text-faint">
             {scheme.meta.doc} · REV {scheme.meta.rev} · UPDATED {scheme.meta.updated.toUpperCase()}
           </span>
-          <span
-            className="cursor-help font-mono text-[10.5px] tracking-[0.18em] text-copper/80"
-            title="Reviewers: the guide is maintained by editing public/data/scheme.json in the repo — see the README for a full walkthrough, including how to show/hide cards."
-          >
-            REVIEWERS · EDIT <span className="text-copperlt">data/scheme.json</span>
-          </span>
           <Reveal className="ml-auto">
             <span className="font-mono text-[10px] tracking-[0.18em] text-faint">
-              WHAT WE EXPECT, <span className="text-copper/70">WRITTEN DOWN.</span>
+              MAINTAINED BY <span className="text-copper/70">{(scheme.meta.maintainer ?? "THE TEAM").toUpperCase()}</span>
             </span>
           </Reveal>
         </div>
       </footer>
+
+      <Credit meta={scheme.meta} />
     </div>
   );
 }

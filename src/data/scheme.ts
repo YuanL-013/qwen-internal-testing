@@ -6,7 +6,7 @@ const ex = (
   description: string,
   reason: string,
   verdict: "pass" | "fail",
-  extra: Partial<{ diagram: string; tags: string[] }> = {}
+  extra: Partial<{ diagram: string; tags: string[]; level: "basics" | "advanced" }> = {}
 ) => ({ id, title, description, reason, verdict, tags: [] as string[], ...extra });
 
 /**
@@ -18,8 +18,10 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
-    rev: "F1",
-    updated: "2026-02-27",
+    rev: "G",
+    updated: "2026-03-02",
+    maintainer: "the Hardware Division",
+    lastUpdatedBy: "the Hardware Division",
   },
   categories: [
     {
@@ -75,6 +77,22 @@ export const DEFAULT_SCHEME: Scheme = {
           "At speed, an open stub rings and radiates — a little antenna you didn't order. When a net moves, delete the old copper. Don't leave tails.",
           "fail",
           { diagram: "stub", tags: ["routing", "cleanup"] }
+        ),
+        ex(
+          "ex-gridplace",
+          "Placement first, snapped to a grid",
+          "Every part is placed and signed off before a single trace is routed — parts snapped to a 0.5–1 mm grid, lined up in tidy rows.",
+          "Routing a bad placement is just decorating a mistake. When parts sit on a grid the short, obvious routes appear by themselves, and the board reads like it was drawn on purpose.",
+          "pass",
+          { diagram: "gridplace", tags: ["placement", "workflow"] }
+        ),
+        ex(
+          "ex-routeorder",
+          "Route power first, then the fussy nets, then the rest",
+          "Routing happens in order: power rails and high-current paths first, then CAN/USB/clock, then everything else.",
+          "The leftovers always find a way around — the rails and the fast nets won't. If you route signals first you'll keep cutting them up to make room for copper that needed to be there all along.",
+          "pass",
+          { diagram: "routeorder", tags: ["routing", "workflow"] }
         ),
       ],
     },
@@ -149,6 +167,22 @@ export const DEFAULT_SCHEME: Scheme = {
           { diagram: "decapbunch", tags: ["decoupling", "mcu"] }
         ),
         ex(
+          "ex-icdecap",
+          "Every IC gets its own decoupling",
+          "Not just the MCU — motor drivers, CAN transceivers, sensor ICs, anything with a power pin gets a 100 nF cap right at that pin.",
+          "Each chip switches its own current and needs its own local reservoir. A driver pulling amps for a motor is exactly the part you don't want borrowing the MCU's cap. One cap per power pin, on every chip.",
+          "pass",
+          { diagram: "icdecap", tags: ["decoupling", "placement"] }
+        ),
+        ex(
+          "ex-capladder",
+          "Bulk cap at the entry, ceramic at the pin",
+          "A big electrolytic (10–47 µF) sits near where power comes in, and small ceramics sit at each IC — they work as a team.",
+          "The bulk cap is the slow, deep tank that soaks up big draws; the ceramic is the quick one that answers in nanoseconds. One without the other leaves a gap. Big at the door, small at the pin.",
+          "pass",
+          { diagram: "capladder", tags: ["decoupling", "power"] }
+        ),
+        ex(
           "ex-rail-thin",
           "Power rails drawn as thin traces",
           "A regulator feeding its inductor through a skinny trace, or the 3.3 V rail routed at signal width.",
@@ -163,6 +197,55 @@ export const DEFAULT_SCHEME: Scheme = {
           "A pF cap only filters the very fastest noise; the bulk cap is the energy bucket the load drinks from. With a pF in its place the output sags and the regulator can ring under load. Read µF / nF / pF twice on every part before ordering.",
           "fail",
           { diagram: "wrongcap", tags: ["passives", "regulator"] }
+        ),
+        ex(
+          "ex-reversepol",
+          "Reverse-polarity protection on the power entry",
+          "Every battery / supply input has a series diode or P-MOSFET so a reversed plug or battery does no damage.",
+          "Reversed power is the fastest way to kill a board, and it will happen — connectors are small and pits are dark. A single cheap part turns a dead board into a “flip the plug” moment.",
+          "pass",
+          { diagram: "reversepol", tags: ["power", "protection"] }
+        ),
+        ex(
+          "ex-polyfuse",
+          "A fuse on the battery feed",
+          "A polyfuse or proper fuse sits in series with the main battery input, sized just above the board's normal draw.",
+          "Wiring mistakes, a jammed motor, a shorted tool on the bench — all of them pull huge current. The fuse gives up before the trace or the battery connector does, and a polyfuse resets itself after the fault is removed.",
+          "pass",
+          { diagram: "polyfuse", tags: ["power", "protection"] }
+        ),
+      ],
+    },
+    {
+      id: "cat-hc",
+      code: "HC",
+      name: "High-Current Design",
+      blurb:
+        "Amps don't care how hard you tried — high-current paths want copper area and short loops, not long skinny traces.",
+      examples: [
+        ex(
+          "ex-hc-poly",
+          "High-current paths ride on polygons",
+          "Battery feeds, motor outputs and switcher nodes are carried by copper polygons (zone pours), not by routed traces — current spreads through wide copper on one or more layers.",
+          "A trace's current limit is set by its width and by how hot it's allowed to get; a polygon removes both problems. Wide copper means low resistance, less voltage drop, and the whole area doubles as a heat spreader. Copper is free — spend it where the amps are.",
+          "pass",
+          { diagram: "hcpoly", tags: ["power", "polygons"] }
+        ),
+        ex(
+          "ex-hc-viaarray",
+          "Via arrays share the load",
+          "Wherever current has to change layers, it crosses through a grid of vias in parallel — never a single one.",
+          "One via safely carries roughly half an amp to an amp before it heats up. A via array splits the current between many holes so no single via becomes a bottleneck — or a fuse.",
+          "pass",
+          { diagram: "viaarray", tags: ["vias", "power"] }
+        ),
+        ex(
+          "ex-hc-loop",
+          "High-current loops sent the long way round",
+          "A motor or battery path routed on a long detour across the board instead of a tight, direct loop.",
+          "Every extra millimetre of loop adds resistance (heat) and inductance (voltage spikes when the load switches). Keep the source, the switch and the load close, and route the loop tight around them.",
+          "fail",
+          { diagram: "hcloop", tags: ["power", "layout"] }
         ),
       ],
     },
@@ -194,7 +277,7 @@ export const DEFAULT_SCHEME: Scheme = {
           "No ground vias around the crystal, or worse — switching copper routed underneath it.",
           "The oscillator is the most easily disturbed part on the board. A ring of ground vias ties the top and bottom ground together around it and gives noise somewhere else to go. Cheap insurance, real results.",
           "fail",
-          { diagram: "xtalring", tags: ["clock", "shielding"] }
+          { diagram: "xtalring", tags: ["clock", "shielding"], level: "advanced" }
         ),
         ex(
           "ex-via-clear",
@@ -211,6 +294,46 @@ export const DEFAULT_SCHEME: Scheme = {
           "Any noise that lands on one wire but not the other shows up straight at the receiver — the one kind of noise CAN can't ignore. Re-pair them, even loosely, and steer both wires around the noisy copper.",
           "fail",
           { diagram: "cansplit", tags: ["can", "noise"] }
+        ),
+        ex(
+          "ex-returnsplit",
+          "Signals crossing a plane split",
+          "A fast net routed straight over a gap or split in the ground plane beneath it.",
+          "Signal current goes out on the trace and comes back directly underneath it, on the plane. When the plane is split there's no path back — so the return detours all the way around the gap, making a big loop that radiates and picks up noise. Route around splits, or keep the plane continuous.",
+          "fail",
+          { diagram: "returnsplit", tags: ["grounding", "signal integrity"], level: "advanced" }
+        ),
+        ex(
+          "ex-3w",
+          "Fast parallel nets keep their distance",
+          "Parallel high-speed traces spaced at least three trace-widths apart (the old “3W rule”), centre to centre.",
+          "Crosstalk — one net whispering into its neighbour — falls off steeply with spacing. At ~3W the coupling is small enough to ignore for our buses. Closer than that and edges start smearing into each other.",
+          "pass",
+          { diagram: "threew", tags: ["routing", "crosstalk"], level: "advanced" }
+        ),
+        ex(
+          "ex-esd",
+          "ESD diodes on external connectors",
+          "Every pin that leaves the board carries a low-capacitance ESD diode to the rails, placed right at the connector.",
+          "A spark you can't even feel is thousands of volts, and connector pins are the only place it gets an invitation straight inside. One diode array per connector is the cheapest insurance on the bill of materials.",
+          "pass",
+          { diagram: "esd", tags: ["connectors", "protection"] }
+        ),
+        ex(
+          "ex-seriesres",
+          "Series resistors on external signal lines",
+          "Signals that leave the board (UART, enable lines, sensor feeds) go through a small series resistor — 33–100 Ω — placed at the connector side.",
+          "It slows any ESD strike or ground-spike enough for the clamp diodes to absorb it, and it damps ringing on long wires. The signal never notices; the MCU survives the pit.",
+          "pass",
+          { diagram: "seriesres", tags: ["connectors", "protection"] }
+        ),
+        ex(
+          "ex-usbpair",
+          "USB routed as a matched differential pair",
+          "D+ and D− run together at equal length, same layer, 90 Ω apart — with no stubs or mid-pair layer hops.",
+          "USB is differential and relatively fast. If the two wires aren't matched, the receiver sees skew instead of a clean signal and the port drops to nothing or won't enumerate. Keep the pair together from connector to chip.",
+          "pass",
+          { diagram: "usbpair", tags: ["usb", "differential"], level: "advanced" }
         ),
       ],
     },
@@ -251,6 +374,22 @@ export const DEFAULT_SCHEME: Scheme = {
           "Every mistake caught in the schematic is free; the same mistake caught after fab costs a new board. The ERC is the cheapest review you'll ever run.",
           "pass",
           { diagram: "erc", tags: ["erc", "review"] }
+        ),
+        ex(
+          "ex-unusedpins",
+          "No floating inputs, no dangling pins",
+          "Open-drain lines get pull-ups, unused MCU inputs are tied to a defined level (or configured in firmware), and nothing is left drawn as “NC” without a reason.",
+          "A floating input is a coin flip that re-flips with temperature and noise — random resets and phantom wakeups. Defining every pin's state on the schematic makes the board behave the same on day one and day three hundred.",
+          "pass",
+          { diagram: "unusedpins", tags: ["schematic", "pins"] }
+        ),
+        ex(
+          "ex-swd",
+          "Leave a way in: SWD debug header",
+          "Every MCU board carries a small labelled SWD header (SWDIO, SWCLK, GND, 3V3) that stays reachable after assembly.",
+          "The day the firmware locks up or a chip ships bricked, the SWD header is the only way back in. Soldering onto MCU pins under a microscope is not a plan. Four pads cost nothing; a dead board costs a respin.",
+          "pass",
+          { diagram: "swdhdr", tags: ["debug", "connectors"] }
         ),
       ],
     },
@@ -308,6 +447,46 @@ export const DEFAULT_SCHEME: Scheme = {
           "fail",
           { diagram: "headergap", tags: ["connectors", "placement"] }
         ),
+        ex(
+          "ex-orient",
+          "Polarised parts face one way",
+          "Electrolytic caps, diodes and other polarised parts are rotated the same direction within each region — stripes and cathode bands all aligned.",
+          "When every stripe points the same way, a backwards part screams at you during hand assembly, and pick-and-place inspection gets trivial. It costs nothing to plan and saves real debugging time.",
+          "pass",
+          { diagram: "orient", tags: ["placement", "assembly"] }
+        ),
+        ex(
+          "ex-edgeplace",
+          "Connectors at the edge, tall parts kept back",
+          "Anything a cable or hand touches lives at the board edge; tall parts keep clear of the edge so nothing overhangs or fouls the enclosure.",
+          "Connectors in the middle of the board mean cables draped over components and a case that won't close. Planning placement for the real world — hands, cables, screws — is half of good layout.",
+          "pass",
+          { diagram: "edgeplace", tags: ["placement", "connectors"] }
+        ),
+        ex(
+          "ex-stdparts",
+          "Standard packages from the approved list",
+          "Passives use 0402 or 0603, ICs come in packages the assembler stocks — no obscure footprints picked from a single-source datasheet.",
+          "An exotic package means longer lead times, higher cost and a real chance the pick-and-place line rejects the whole job. The approved parts list exists so nobody has to think about it twice.",
+          "pass",
+          { diagram: "stdparts", tags: ["library", "dfm"] }
+        ),
+        ex(
+          "ex-keyed",
+          "Keyed connectors, so cables fit one way",
+          "Power and signal connectors are keyed or polarised — JST-XH, XT60, Dupont with a key — so a cable physically cannot plug in backwards or on the wrong header.",
+          "A reversed power cable is the single fastest way to destroy a board, and in a rushed pit people plug by feel. If the connector can only mate one way, the mistake becomes impossible instead of merely unlikely.",
+          "pass",
+          { diagram: "keyed", tags: ["connectors", "protection"] }
+        ),
+        ex(
+          "ex-maskdam",
+          "Solder mask dams between fine-pitch pads",
+          "On tight pads (0402, QFN) the solder mask keeps a dam of mask between pads, so solder can't bridge across.",
+          "When pads are close and the mask opening is generous, solder wicks from one pad to the next and shorts them. Letting the fab keep mask dams between pads turns a likely bridge into a clean joint.",
+          "pass",
+          { diagram: "maskdam", tags: ["dfm", "assembly"], level: "advanced" }
+        ),
       ],
     },
     {
@@ -348,6 +527,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "fail",
           { diagram: "nopolarity", tags: ["silkscreen", "assembly"] }
         ),
+        ex(
+          "ex-revsilk",
+          "Board name, rev and date on the silk",
+          "Every board carries its name, document/revision and date in a silkscreen corner — e.g. “ROBO-PWR · REV D · 2026-02”.",
+          "Six months from now, three board revisions will live in the same drawer. The silkscreen is the only way to tell them apart without a microscope and a prayer. It also lets anyone report which board they're looking at in a bug report.",
+          "pass",
+          { diagram: "revsilk", tags: ["silkscreen", "documentation"] }
+        ),
       ],
     },
     {
@@ -378,7 +565,23 @@ export const DEFAULT_SCHEME: Scheme = {
           "Mains or high-voltage nets run closer than the creepage table allows.",
           "Too little surface distance lets an arc crawl across the board over time — a safety failure, not a cosmetic one. HV nets get their own clearance rules and usually a routed slot.",
           "fail",
-          { diagram: "creepage", tags: ["safety", "hv"] }
+          { diagram: "creepage", tags: ["safety", "hv"], level: "advanced" }
+        ),
+        ex(
+          "ex-panel",
+          "Rounded corners and breakaway rails",
+          "The outer board outline uses rounded corners, and the design allows panel rails with mouse-bites or V-score so boards can be panelised and broken out cleanly.",
+          "Sharp outside corners snap during fabrication, handling and assembly. Rails let the assembler run a whole panel through pick-and-place and reflow, then snap individual boards out. Small courtesy, big time saved on every order.",
+          "pass",
+          { diagram: "panel", tags: ["dfm", "fab"] }
+        ),
+        ex(
+          "ex-rfkeepout",
+          "Copper-free zone around the antenna",
+          "The radio module's antenna has a keep-out — no copper, traces or ground pour underneath or beside it — exactly as the module datasheet draws it.",
+          "An antenna works by coupling to free space; copper under it couples to the board instead, detuning it and eating your range. The module datasheet shows the exact keep-out shape. Copy it, don't guess it.",
+          "pass",
+          { diagram: "rfkeepout", tags: ["rf", "keepout"], level: "advanced" }
         ),
       ],
     },
@@ -412,6 +615,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "fail",
           { diagram: "drill", tags: ["outputs", "fab"] }
         ),
+        ex(
+          "ex-mechlayer",
+          "Board outline on its own mechanical layer",
+          "The board edge, slots and cutouts live on a dedicated mechanical/edge layer — never drawn into a copper or silk layer.",
+          "Fabs read the outline from a specific layer. When the edge is buried in copper art, the CAM operator has to guess where the board actually ends — and a wrong guess cuts your connectors in half. One layer, one purpose.",
+          "pass",
+          { diagram: "mechlayer", tags: ["outputs", "fab"], level: "advanced" }
+        ),
       ],
     },
   ],
@@ -433,5 +644,42 @@ export const DEFAULT_SCHEME: Scheme = {
     "Connectors from the library with 3D checked; headers spaced for housings",
     "Every subsystem on the schematic has a power feed — pneumatics included",
     "Gerber set + drill file verified layer-by-layer in a viewer",
+    "High-current paths ride polygons + via arrays, never thin traces",
+    "No signal crosses a plane split; parallel fast nets spaced ≥ 3W",
+    "Polarised parts face one way; board name + rev + date on the silk",
+    "Power entry protected: reverse-polarity part + fuse on the battery feed",
+    "External connectors have ESD diodes + series resistors",
+    "RF antenna keep-out copied from the module datasheet",
+    "Board outline on its own mechanical layer",
+    "Every IC — not just the MCU — gets decoupling caps",
+    "SWD debug header fitted, labelled, reachable after assembly",
+    "Solder mask dams on fine-pitch pads",
+  ],
+  readings: [
+    {
+      group: "If you're brand new to PCBs",
+      links: [
+        { title: "SparkFun — PCB Basics", url: "https://learn.sparkfun.com/tutorials/pcb-basics", note: "A friendly, illustrated tour of what a PCB actually is and how it's made.", tag: "DOCS" },
+        { title: "Adafruit — Guide to Excellent PCBs", url: "https://learn.adafruit.com/adafruit-guide-excellent-pcb", note: "Practical layout habits from a team that ships boards constantly.", tag: "DOCS" },
+        { title: "KiCad Documentation", url: "https://docs.kicad.org/", note: "The official manual for the tool most of us design in.", tag: "DOCS" },
+      ],
+    },
+    {
+      group: "Routing, grounding & signal integrity",
+      links: [
+        { title: "Phil's Lab on YouTube", url: "https://www.youtube.com/@PhilsLab", note: "Full mixed-signal board designs walked through start to finish in KiCad.", tag: "VIDEO" },
+        { title: "Robert Feranec on YouTube", url: "https://www.youtube.com/@RobertFeranec", note: "Deep dives on high-speed routing, power integrity and why boards fail.", tag: "VIDEO" },
+        { title: "Rick Hartley — How to Achieve Proper Grounding", url: "https://www.youtube.com/results?search_query=rick+hartley+how+to+achieve+proper+grounding", note: "The classic four-hour grounding talk. Search it, block an evening, thank us later.", tag: "VIDEO" },
+        { title: "Eric Bogatin — beTheSignal", url: "https://www.bethesignal.org/", note: "Signal integrity explained as rules of thumb instead of math.", tag: "REFERENCE" },
+      ],
+    },
+    {
+      group: "Manufacturing & standards",
+      links: [
+        { title: "JLCPCB PCB Capabilities", url: "https://jlcpcb.com/capabilities/pcb-capabilities", note: "Where our 0.2 mm / 0.2 mm baseline comes from — the fab's real limits.", tag: "TOOLS" },
+        { title: "IPC-7351 Footprint Standard", url: "https://www.ipc.org/ipc-7351", note: "The standard behind our footprint and courtyard conventions.", tag: "REFERENCE" },
+        { title: "PCBWay Shared Projects", url: "https://www.pcbway.com/project/shareproject/", note: "Real open designs to study — see how others solved the same problems.", tag: "REFERENCE" },
+      ],
+    },
   ],
 };

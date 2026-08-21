@@ -69,6 +69,7 @@ CAN/clock, etc.). Inside it there's an `"examples": [ ... ]` list.
 | `reason` | The *why*. | This is hidden behind a "Why this works/fails" tap on the card. |
 | `tags` | A few lowercase keywords. | Powers the search box. |
 | `diagram` **or** `image` | The visual — see below. | Use **one** of these, not both. |
+| `level` *(optional)* | `"advanced"` to show a small **PRO** badge. | Leave it out for day-one rules. |
 
 > **Punctuation tip:** each example object ends with a comma `,` *except* the very last one in a
 > list. If the site goes blank after your edit, you almost certainly added or dropped a comma.
@@ -81,15 +82,17 @@ You have two choices:
 hand-drawn SVG illustrations that always look consistent.
 
 ```
-corners  corner90  netclass  neckdown  stub
+corners  corner90  netclass  neckdown  stub  gridplace  routeorder
 relief  stitch  decap  decapbunch  thermalvias  railzone  thinrail  wrongcap
-canpair  cansplit  xtal  xtalring  viakeepout
-schflow  netnaming  decal  erc
-footprint  pin1  xh  sketchfp  mirror  headergap
-refdes  silkhdr  silkpad  nopolarity
-drc  sliver  creepage
-gerbers  drill  datasheet
-teardrop  antipad  caporient  courtyard  mount  testpts  fiducials  starpoint
+icdecap  capladder  reversepol  polyfuse
+hcpoly  viaarray  hcloop
+canpair  cansplit  xtal  xtalring  viakeepout  usbpair  esd  seriesres
+schflow  netnaming  decal  erc  unusedpins  swdhdr
+footprint  pin1  xh  sketchfp  mirror  headergap  orient  stdparts  edgeplace  keyed  maskdam
+refdes  silkhdr  silkpad  nopolarity  revsilk
+drc  sliver  creepage  rfkeepout  panel
+gerbers  drill  datasheet  mechlayer
+teardrop  antipad  caporient  courtyard  mount  testpts  fiducials  starpoint  returnsplit  threew
 ```
 
 **Option B — a real photo** (great for "we actually saw this on a board").
@@ -202,6 +205,32 @@ If your conventions don't fit an existing topic, add a new category object to th
 
 ---
 
+## Editing the "Further reading" links
+
+The reading list at the bottom is also data — a `"readings"` array at the end of the file. Each
+group is a heading plus a list of links:
+
+```json
+"readings": [
+  {
+    "group": "Routing, grounding & signal integrity",
+    "links": [
+      {
+        "title": "Phil's Lab on YouTube",
+        "url": "https://www.youtube.com/@PhilsLab",
+        "note": "One line on why this link earns its place.",
+        "tag": "VIDEO"
+      }
+    ]
+  }
+]
+```
+
+- `tag` is one of `DOCS`, `VIDEO`, `TOOLS`, `REFERENCE` (it just picks the chip colour).
+- Add or remove whole groups or single links freely; empty groups are skipped automatically.
+
+---
+
 ## Changing the team name, revision & date
 
 At the top of the file:
@@ -210,15 +239,21 @@ At the top of the file:
 "meta": {
   "team": "HKUST Robotics Team",
   "doc": "STD-PCB-01",
-  "rev": "F1",
-  "updated": "2026-02-27"
+  "rev": "F4",
+  "updated": "2026-03-01",
+  "maintainer": "the Hardware Division",
+  "lastUpdatedBy": "the Hardware Division"
 }
 ```
 
-- **`rev`** — bump it each time you publish a change (`F1` → `G` → `H`…). Letters, or letter +
+- **`rev`** — bump it each time you publish a change (`F4` → `G` → `H`…). Letters, or letter +
   number for small fixes. The site only trusts a data file whose revision is *the same as or newer
   than* the one it was built with, so an old copy can never clobber new content.
 - **`updated`** — set to today's date in `YYYY-MM-DD` form.
+- **`maintainer`** — shown in the footer as "MAINTAINED BY …", so trainees know who to ask.
+- **`lastUpdatedBy`** — the small "LAST UPDATED BY …" line at the very bottom. On GitHub Pages the
+  site reads the *actual* last git commit to `data/scheme.json`, so this updates itself whenever
+  someone pushes; the field is only the fallback when git history can't be read (e.g. local builds).
 
 ---
 
