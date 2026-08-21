@@ -137,9 +137,18 @@ const Corners = () => (
 const Corner90 = () => (
   <Mini caption="RIGHT ANGLE = ACID TRAP">
     <path d="M 22 98 H 108 V 34 H 198" fill="none" stroke={CU} strokeWidth="11" strokeLinecap="round" strokeLinejoin="miter" />
-    <path d="M 113.5 92.5 L 131 92.5 Q 120 88 113.5 75 Z" fill={BAD} opacity="0.9" />
-    <Callout x={120} y={85} r={21} />
-    <Lbl x={152} y={112} tone={BAD}>etchant pools in the notch</Lbl>
+    {/* stale etchant pooling tight into the inner notch */}
+    <path d="M 113.5 92.5 L 131 92.5 A 17.5 17.5 0 0 0 113.5 75 Z" fill={BAD} opacity="0.78" />
+    <circle cx={121} cy={86} r={1.6} fill="#fbd4d0" opacity="0.9" />
+    <circle cx={117} cy={80.5} r={1.1} fill="#fbd4d0" opacity="0.85" />
+    <circle cx={125.5} cy={89.5} r={1.2} fill="#fbd4d0" opacity="0.85" />
+    {/* both copper walls eaten back beside the pool */}
+    <path d="M 116 94.6 H 125" stroke={BAD} strokeWidth="1.2" strokeDasharray="2.5 2" />
+    <path d="M 111.4 90 V 81" stroke={BAD} strokeWidth="1.2" strokeDasharray="2.5 2" />
+    <Callout x={121} y={84} r={23} />
+    <path d="M 144 84 H 149" stroke={BAD} strokeWidth="1.2" />
+    <Lbl x={151} y={80} tone={BAD} anchor="start" size={7.5}>pooled etchant</Lbl>
+    <Lbl x={151} y={92} tone={BAD} anchor="start" size={7.5}>eats both walls</Lbl>
   </Mini>
 );
 

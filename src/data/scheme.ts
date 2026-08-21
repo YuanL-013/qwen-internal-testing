@@ -18,7 +18,7 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
-    rev: "F",
+    rev: "F1",
     updated: "2026-02-26",
   },
   categories: [
