@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Chakra Petch", "IBM Plex Sans", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+
+  --color-ink: #e9f2ea;
+  --color-dim: #9cb8a7;
+  --color-faint: #67856f;
+  --color-bg: #0a1712;
+  --color-panel: #0f231b;
+  --color-panel2: #132c22;
+  --color-raise: #17362a;
+  --color-edge: #20493a;
+  --color-edgesoft: #183a2d;
+  --color-copper: #e0955a;
+  --color-copperlt: #f6c489;
+  --color-gold: #f0cd8d;
+  --color-pass: #55d78e;
+  --color-passdim: #2c7a52;
+  --color-fail: #f2685e;
+  --color-faildim: #8f3731;
+  --color-warn: #f0b453;
+  --color-info: #56c3b2;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---- grain overlay ---- */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: rgba(224, 149, 90, 0.35);
+  color: #fff7ec;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-copper);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0c1d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #20493a;
+  border-radius: 6px;
+  border: 2px solid #0c1d16;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2f6350;
+}
+
+/* ---- PCB dot drill grid ---- */
+.dotgrid {
+  background-image: radial-gradient(circle, rgba(86, 195, 178, 0.13) 1px, transparent 1.4px);
+  background-size: 26px 26px;
+}
+
+/* ---- scroll reveal ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--rv-delay, 0ms);
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- ticker ---- */
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 46s linear infinite;
+}
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---- misc animation ---- */
+@keyframes blinkled {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.led {
+  animation: blinkled 1.6s ease-in-out infinite;
+}
+
+@keyframes shakex {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.shake {
+  animation: shakex 0.45s ease both;
+}
+
+@keyframes toastin {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.toastin {
+  animation: toastin 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes modalin {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.modalin {
+  animation: modalin 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fadein {
+  animation: fadein 0.25s ease both;
+}
+
+@keyframes flashline {
+  0% { box-shadow: 0 0 0 2px rgba(224, 149, 90, 0.9); }
+  100% { box-shadow: 0 0 0 2px rgba(224, 149, 90, 0); }
+}
+.flashline {
+  animation: flashline 1.2s ease-out both;
+}
+
+/* dashed "route" divider */
+.routedash {
+  background-image: linear-gradient(90deg, var(--color-edge) 55%, transparent 45%);
+  background-size: 14px 1px;
+  background-repeat: repeat-x;
+  background-position: center;
+  height: 1px;
+}
+
+/* ---- reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .ticker-track,
+  .led,
+  .shake,
+  .toastin,
+  .modalin,
+  .fadein,
+  .flashline {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
