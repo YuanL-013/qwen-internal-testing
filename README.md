@@ -202,6 +202,32 @@ If your conventions don't fit an existing topic, add a new category object to th
 
 ---
 
+## Editing the "Further reading" links
+
+The reading list at the bottom is also data — a `"readings"` array at the end of the file. Each
+group is a heading plus a list of links:
+
+```json
+"readings": [
+  {
+    "group": "Routing, grounding & signal integrity",
+    "links": [
+      {
+        "title": "Phil's Lab on YouTube",
+        "url": "https://www.youtube.com/@PhilsLab",
+        "note": "One line on why this link earns its place.",
+        "tag": "VIDEO"
+      }
+    ]
+  }
+]
+```
+
+- `tag` is one of `DOCS`, `VIDEO`, `TOOLS`, `REFERENCE` (it just picks the chip colour).
+- Add or remove whole groups or single links freely; empty groups are skipped automatically.
+
+---
+
 ## Changing the team name, revision & date
 
 At the top of the file:
@@ -210,15 +236,17 @@ At the top of the file:
 "meta": {
   "team": "HKUST Robotics Team",
   "doc": "STD-PCB-01",
-  "rev": "F1",
-  "updated": "2026-02-27"
+  "rev": "F2",
+  "updated": "2026-02-27",
+  "maintainer": "the Hardware Division"
 }
 ```
 
-- **`rev`** — bump it each time you publish a change (`F1` → `G` → `H`…). Letters, or letter +
+- **`rev`** — bump it each time you publish a change (`F2` → `G` → `H`…). Letters, or letter +
   number for small fixes. The site only trusts a data file whose revision is *the same as or newer
   than* the one it was built with, so an old copy can never clobber new content.
 - **`updated`** — set to today's date in `YYYY-MM-DD` form.
+- **`maintainer`** — shown in the footer as "MAINTAINED BY …", so trainees know who to ask.
 
 ---
 

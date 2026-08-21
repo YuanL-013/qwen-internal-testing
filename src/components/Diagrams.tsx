@@ -1,4 +1,4 @@
-import { useId, type ReactElement, type ReactNode } from "react";
+import { createContext, useId, useContext, type ReactElement, type ReactNode } from "react";
 
 /* Stylised "layout excerpt" illustrations drawn as inline SVG —
    precise enough to teach from, consistent with the doc's visual language. */
@@ -11,20 +11,31 @@ const GOOD = "#55d78e";
 const DIM = "#9cb8a7";
 const MONO = "var(--font-mono)";
 
+/* NOT-OKAY diagrams are wrapped in <RedTone> so their substrate reads red. */
+const ToneCtx = createContext(false);
+export function RedTone({ children }: { children: ReactNode }) {
+  return <ToneCtx.Provider value>{children}</ToneCtx.Provider>;
+}
+
 function Mini({ children, caption }: { children: ReactNode; caption?: string }) {
+  const red = useContext(ToneCtx);
+  const bg = red ? "#231210" : "#0d281e";
+  const frame = red ? "#4a251f" : "#1c4636";
+  const dot = red ? "#3a1d18" : "#173a2d";
+  const cap = red ? "#8f6a5f" : "#67856f";
   const dots: Array<[number, number]> = [];
   for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) dots.push([18 + c * 23, 16 + r * 25]);
   return (
     <svg viewBox="0 0 220 132" className="block h-auto w-full" role="img">
-      <rect x="1" y="1" width="218" height="130" rx="8" fill="#0d281e" stroke="#1c4636" strokeWidth="1.5" />
-      <g fill="#173a2d">
+      <rect x="1" y="1" width="218" height="130" rx="8" fill={bg} stroke={frame} strokeWidth="1.5" />
+      <g fill={dot}>
         {dots.map(([x, y], i) => (
           <circle key={i} cx={x} cy={y} r="1.2" />
         ))}
       </g>
       {children}
       {caption && (
-        <text x="10" y="123" fontFamily={MONO} fontSize="7.5" letterSpacing="0.08em" fill="#67856f">
+        <text x="10" y="123" fontFamily={MONO} fontSize="7.5" letterSpacing="0.08em" fill={cap}>
           {caption}
         </text>
       )}
@@ -32,18 +43,10 @@ function Mini({ children, caption }: { children: ReactNode; caption?: string }) 
   );
 }
 
-function Mark({ x, y, ok }: { x: number; y: number; ok: boolean }) {
-  const tone = ok ? GOOD : BAD;
-  return (
-    <g>
-      <circle cx={x} cy={y} r="10" fill="#0d281e" stroke={tone} strokeWidth="2" />
-      {ok ? (
-        <path d={`M ${x - 4.5} ${y} L ${x - 1.2} ${y + 3.6} L ${x + 5} ${y - 3.4}`} fill="none" stroke={tone} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      ) : (
-        <path d={`M ${x - 4} ${y - 4} L ${x + 4} ${y + 4} M ${x + 4} ${y - 4} L ${x - 4} ${y + 4}`} stroke={tone} strokeWidth="2.4" strokeLinecap="round" />
-      )}
-    </g>
-  );
+/* Verdict ticks/crosses now live on the card chrome (border colour + label),
+   not inside the drawing — they kept covering the diagrams. */
+function Mark(_p: { x: number; y: number; ok: boolean }) {
+  return null;
 }
 
 function Callout({ x, y, r = 19, tone = BAD }: { x: number; y: number; r?: number; tone?: string }) {
@@ -372,8 +375,7 @@ const Gerbers = () => (
         <text x={44 + i * 7} y={93 - i * 14} fontFamily={MONO} fontSize="9" fill={c as string}>{t}</text>
       </g>
     ))}
-    <Mark x={188} y={30} ok />
-    <Lbl x={188} y={112} tone={GOOD} size={7.5}>+ paste + outline</Lbl>
+    <Lbl x={210} y={112} tone={GOOD} size={7.5} anchor="end">+ paste + outline</Lbl>
   </Mini>
 );
 
@@ -763,8 +765,8 @@ const Xh = () => (
       <ThPad key={x} x={x} y={84} />
     ))}
     <Dim x1={58} y1={102} x2={84} y2={102} label="2.54" tone={GOOD} />
-    <Lbl x={178} y={44} tone={GOOD} size={7.5} anchor="start">3D checked</Lbl>
-    <Lbl x={178} y={56} tone={GOOD} size={7.5} anchor="start">before fab</Lbl>
+    <Lbl x={210} y={44} tone={GOOD} size={7.5} anchor="end">3D checked</Lbl>
+    <Lbl x={210} y={56} tone={GOOD} size={7.5} anchor="end">before fab</Lbl>
     <Mark x={196} y={98} ok />
   </Mini>
 );

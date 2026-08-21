@@ -28,6 +28,7 @@ function normalizeScheme(raw: unknown): Scheme {
         }))
       : base.categories,
     checklist: Array.isArray(r.checklist) && r.checklist.length ? (r.checklist as string[]) : base.checklist,
+    readings: Array.isArray(r.readings) && r.readings.length ? (r.readings as Scheme["readings"]) : base.readings,
   };
 }
 

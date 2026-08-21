@@ -4,7 +4,7 @@ export interface Example {
   id: string;
   title: string;
   verdict: Verdict;
-  /** What you're looking at on the board. */
+  /** What the reviewer (and trainee) is looking at. */
   description: string;
   /** Why this pattern is okay / not okay — the part that settles arguments. */
   reason: string;
@@ -13,7 +13,7 @@ export interface Example {
   diagram?: string;
   /** Path to a photo/shot committed to the repo (e.g. "examples/pad.jpg") or a URL. */
   image?: string;
-  /** Set "hidden": true in data/scheme.json to keep the finding in the repo but not show it on the guide. */
+  /** Set true to keep the finding in the file without showing it on the site. */
   hidden?: boolean;
 }
 
@@ -23,8 +23,20 @@ export interface Category {
   name: string;
   blurb: string;
   examples: Example[];
-  /** Set "hidden": true in data/scheme.json to hide the whole topic from the guide. */
+  /** Set true to hide a whole category (tab + section) from the site. */
   hidden?: boolean;
+}
+
+export interface ReadingLink {
+  title: string;
+  url: string;
+  note?: string;
+  tag?: string; // DOCS · TOOLS · VIDEO · REFERENCE
+}
+
+export interface ReadingGroup {
+  group: string;
+  links: ReadingLink[];
 }
 
 export interface SchemeMeta {
@@ -32,10 +44,12 @@ export interface SchemeMeta {
   doc: string;
   rev: string;
   updated: string; // ISO yyyy-mm-dd
+  maintainer?: string; // shown in the footer
 }
 
 export interface Scheme {
   meta: SchemeMeta;
   categories: Category[];
   checklist: string[];
+  readings?: ReadingGroup[];
 }

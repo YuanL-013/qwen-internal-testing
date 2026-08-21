@@ -18,8 +18,9 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
-    rev: "F1",
+    rev: "F2",
     updated: "2026-02-27",
+    maintainer: "the Hardware Division",
   },
   categories: [
     {
@@ -433,5 +434,32 @@ export const DEFAULT_SCHEME: Scheme = {
     "Connectors from the library with 3D checked; headers spaced for housings",
     "Every subsystem on the schematic has a power feed — pneumatics included",
     "Gerber set + drill file verified layer-by-layer in a viewer",
+  ],
+  readings: [
+    {
+      group: "If you're brand new to PCBs",
+      links: [
+        { title: "SparkFun — PCB Basics", url: "https://learn.sparkfun.com/tutorials/pcb-basics", note: "A friendly, illustrated tour of what a PCB actually is and how it's made.", tag: "DOCS" },
+        { title: "Adafruit — Guide to Excellent PCBs", url: "https://learn.adafruit.com/adafruit-guide-excellent-pcb", note: "Practical layout habits from a team that ships boards constantly.", tag: "DOCS" },
+        { title: "KiCad Documentation", url: "https://docs.kicad.org/", note: "The official manual for the tool most of us design in.", tag: "DOCS" },
+      ],
+    },
+    {
+      group: "Routing, grounding & signal integrity",
+      links: [
+        { title: "Phil's Lab on YouTube", url: "https://www.youtube.com/@PhilsLab", note: "Full mixed-signal board designs walked through start to finish in KiCad.", tag: "VIDEO" },
+        { title: "Robert Feranec on YouTube", url: "https://www.youtube.com/@RobertFeranec", note: "Deep dives on high-speed routing, power integrity and why boards fail.", tag: "VIDEO" },
+        { title: "Rick Hartley — How to Achieve Proper Grounding", url: "https://www.youtube.com/results?search_query=rick+hartley+how+to+achieve+proper+grounding", note: "The classic four-hour grounding talk. Search it, block an evening, thank us later.", tag: "VIDEO" },
+        { title: "Eric Bogatin — beTheSignal", url: "https://www.bethesignal.org/", note: "Signal integrity explained as rules of thumb instead of math.", tag: "REFERENCE" },
+      ],
+    },
+    {
+      group: "Manufacturing & standards",
+      links: [
+        { title: "JLCPCB PCB Capabilities", url: "https://jlcpcb.com/capabilities/pcb-capabilities", note: "Where our 0.2 mm / 0.2 mm baseline comes from — the fab's real limits.", tag: "TOOLS" },
+        { title: "IPC-7351 Footprint Standard", url: "https://www.ipc.org/ipc-7351", note: "The standard behind our footprint and courtyard conventions.", tag: "REFERENCE" },
+        { title: "PCBWay Shared Projects", url: "https://www.pcbway.com/project/shareproject/", note: "Real open designs to study — see how others solved the same problems.", tag: "REFERENCE" },
+      ],
+    },
   ],
 };
