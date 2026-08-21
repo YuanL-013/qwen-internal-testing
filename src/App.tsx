@@ -156,7 +156,7 @@ export default function App() {
         </div>
       </footer>
 
-      <Credit name={scheme.meta.initiatedBy} />
+      <Credit meta={scheme.meta} />
     </div>
   );
 }

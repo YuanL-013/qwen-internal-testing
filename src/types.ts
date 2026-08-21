@@ -45,7 +45,7 @@ export interface SchemeMeta {
   rev: string;
   updated: string; // ISO yyyy-mm-dd
   maintainer?: string; // shown in the footer
-  initiatedBy?: string; // blended credit line at the very bottom of the page
+  lastUpdatedBy?: string; // fallback for the credit line when git history is unreadable
 }
 
 export interface Scheme {

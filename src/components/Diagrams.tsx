@@ -1012,11 +1012,9 @@ const Orient = () => (
 const RevSilk = () => (
   <Mini caption="IDENTIFY EVERY BOARD">
     <rect x={24} y={26} width={172} height={80} rx="6" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <circle cx={36} cy={38} r="4" fill={GOLD} />
-    <circle cx={36} cy={38} r="1.6" fill="#0d281e" />
-    <text x={36} y={92} fontFamily={MONO} fontSize="9" fill={SILK}>ROBO-PWR · REV D</text>
-    <text x={36} y={102} fontFamily={MONO} fontSize="6.5" fill={DIM}>2026-02 · HKUST ROBOTICS</text>
-    <Callout x={82} y={94} r={34} tone={GOOD} />
+    <text x={36} y={58} fontFamily={MONO} fontSize="9" fill={SILK}>ROBO-PWR · REV D</text>
+    <text x={36} y={70} fontFamily={MONO} fontSize="6.5" fill={DIM}>2026-02 · HKUST ROBOTICS</text>
+    <Callout x={86} y={62} r={36} tone={GOOD} />
     <Lbl x={160} y={48} tone={GOOD} size={7}>read it in the lab,</Lbl>
     <Lbl x={160} y={60} tone={GOOD} size={7}>not in the CAD</Lbl>
   </Mini>

@@ -18,10 +18,10 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
-    rev: "F3",
-    updated: "2026-02-28",
+    rev: "F4",
+    updated: "2026-03-01",
     maintainer: "the Hardware Division",
-    initiatedBy: "the first hardware batch",
+    lastUpdatedBy: "the Hardware Division",
   },
   categories: [
     {
@@ -174,6 +174,22 @@ export const DEFAULT_SCHEME: Scheme = {
           "fail",
           { diagram: "wrongcap", tags: ["passives", "regulator"] }
         ),
+        ex(
+          "ex-reversepol",
+          "Reverse-polarity protection on the power entry",
+          "Every battery / supply input has a series diode or P-MOSFET so a reversed plug or battery does no damage.",
+          "Reversed power is the fastest way to kill a board, and it will happen — connectors are small and pits are dark. A single cheap part turns a dead board into a “flip the plug” moment.",
+          "pass",
+          { diagram: "reversepol", tags: ["power", "protection"] }
+        ),
+        ex(
+          "ex-polyfuse",
+          "A fuse on the battery feed",
+          "A polyfuse or proper fuse sits in series with the main battery input, sized just above the board's normal draw.",
+          "Wiring mistakes, a jammed motor, a shorted tool on the bench — all of them pull huge current. The fuse gives up before the trace or the battery connector does, and a polyfuse resets itself after the fault is removed.",
+          "pass",
+          { diagram: "polyfuse", tags: ["power", "protection"] }
+        ),
       ],
     },
     {
@@ -271,6 +287,22 @@ export const DEFAULT_SCHEME: Scheme = {
           "pass",
           { diagram: "threew", tags: ["routing", "crosstalk"] }
         ),
+        ex(
+          "ex-esd",
+          "ESD diodes on external connectors",
+          "Every pin that leaves the board carries a low-capacitance ESD diode to the rails, placed right at the connector.",
+          "A spark you can't even feel is thousands of volts, and connector pins are the only place it gets an invitation straight inside. One diode array per connector is the cheapest insurance on the bill of materials.",
+          "pass",
+          { diagram: "esd", tags: ["connectors", "protection"] }
+        ),
+        ex(
+          "ex-seriesres",
+          "Series resistors on external signal lines",
+          "Signals that leave the board (UART, enable lines, sensor feeds) go through a small series resistor — 33–100 Ω — placed at the connector side.",
+          "It slows any ESD strike or ground-spike enough for the clamp diodes to absorb it, and it damps ringing on long wires. The signal never notices; the MCU survives the pit.",
+          "pass",
+          { diagram: "seriesres", tags: ["connectors", "protection"] }
+        ),
       ],
     },
     {
@@ -310,6 +342,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "Every mistake caught in the schematic is free; the same mistake caught after fab costs a new board. The ERC is the cheapest review you'll ever run.",
           "pass",
           { diagram: "erc", tags: ["erc", "review"] }
+        ),
+        ex(
+          "ex-unusedpins",
+          "No floating inputs, no dangling pins",
+          "Open-drain lines get pull-ups, unused MCU inputs are tied to a defined level (or configured in firmware), and nothing is left drawn as “NC” without a reason.",
+          "A floating input is a coin flip that re-flips with temperature and noise — random resets and phantom wakeups. Defining every pin's state on the schematic makes the board behave the same on day one and day three hundred.",
+          "pass",
+          { diagram: "unusedpins", tags: ["schematic", "pins"] }
         ),
       ],
     },
@@ -374,6 +414,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "When every stripe points the same way, a backwards part screams at you during hand assembly, and pick-and-place inspection gets trivial. It costs nothing to plan and saves real debugging time.",
           "pass",
           { diagram: "orient", tags: ["placement", "assembly"] }
+        ),
+        ex(
+          "ex-stdparts",
+          "Standard packages from the approved list",
+          "Passives use 0402 or 0603, ICs come in packages the assembler stocks — no obscure footprints picked from a single-source datasheet.",
+          "An exotic package means longer lead times, higher cost and a real chance the pick-and-place line rejects the whole job. The approved parts list exists so nobody has to think about it twice.",
+          "pass",
+          { diagram: "stdparts", tags: ["library", "dfm"] }
         ),
       ],
     },
@@ -463,6 +511,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "pass",
           { diagram: "panel", tags: ["dfm", "fab"] }
         ),
+        ex(
+          "ex-rfkeepout",
+          "Copper-free zone around the antenna",
+          "The radio module's antenna has a keep-out — no copper, traces or ground pour underneath or beside it — exactly as the module datasheet draws it.",
+          "An antenna works by coupling to free space; copper under it couples to the board instead, detuning it and eating your range. The module datasheet shows the exact keep-out shape. Copy it, don't guess it.",
+          "pass",
+          { diagram: "rfkeepout", tags: ["rf", "keepout"] }
+        ),
       ],
     },
     {
@@ -495,6 +551,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "fail",
           { diagram: "drill", tags: ["outputs", "fab"] }
         ),
+        ex(
+          "ex-mechlayer",
+          "Board outline on its own mechanical layer",
+          "The board edge, slots and cutouts live on a dedicated mechanical/edge layer — never drawn into a copper or silk layer.",
+          "Fabs read the outline from a specific layer. When the edge is buried in copper art, the CAM operator has to guess where the board actually ends — and a wrong guess cuts your connectors in half. One layer, one purpose.",
+          "pass",
+          { diagram: "mechlayer", tags: ["outputs", "fab"] }
+        ),
       ],
     },
   ],
@@ -519,6 +583,10 @@ export const DEFAULT_SCHEME: Scheme = {
     "High-current paths ride polygons + via arrays, never thin traces",
     "No signal crosses a plane split; parallel fast nets spaced ≥ 3W",
     "Polarised parts face one way; board name + rev + date on the silk",
+    "Power entry protected: reverse-polarity part + fuse on the battery feed",
+    "External connectors have ESD diodes + series resistors",
+    "RF antenna keep-out copied from the module datasheet",
+    "Board outline on its own mechanical layer",
   ],
   readings: [
     {
