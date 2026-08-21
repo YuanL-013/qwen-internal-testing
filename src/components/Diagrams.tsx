@@ -22,24 +22,35 @@ function Mini({ children, caption }: { children: ReactNode; caption?: string }) 
   const bg = red ? "#231210" : "#0d281e";
   const frame = red ? "#4a251f" : "#1c4636";
   const dot = red ? "#3a1d18" : "#173a2d";
-  const cap = red ? "#8f6a5f" : "#67856f";
+  const cap = red ? "#c98d84" : "#7fa38d";
+  const marker = red ? "#b06a60" : "#3f7d63";
   const dots: Array<[number, number]> = [];
   for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) dots.push([18 + c * 23, 16 + r * 25]);
   return (
-    <svg viewBox="0 0 220 132" className="block h-auto w-full" role="img">
-      <rect x="1" y="1" width="218" height="130" rx="8" fill={bg} stroke={frame} strokeWidth="1.5" />
-      <g fill={dot}>
-        {dots.map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r="1.2" />
-        ))}
-      </g>
-      {children}
+    <figure className="m-0">
       {caption && (
-        <text x="10" y="123" fontFamily={MONO} fontSize="7.5" letterSpacing="0.08em" fill={cap}>
+        <figcaption
+          className="mb-1.5 flex items-center gap-1.5 font-mono text-[8.5px] font-medium tracking-[0.2em]"
+          style={{ color: cap }}
+        >
+          <span
+            aria-hidden
+            className="inline-block h-[5px] w-[5px] shrink-0 rotate-45 border"
+            style={{ borderColor: marker }}
+          />
           {caption}
-        </text>
+        </figcaption>
       )}
-    </svg>
+      <svg viewBox="0 0 220 132" className="block h-auto w-full" role="img">
+        <rect x="1" y="1" width="218" height="130" rx="8" fill={bg} stroke={frame} strokeWidth="1.5" />
+        <g fill={dot}>
+          {dots.map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r="1.2" />
+          ))}
+        </g>
+        {children}
+      </svg>
+    </figure>
   );
 }
 
@@ -161,7 +172,7 @@ const NetClass = () => (
     <path d="M 24 68 H 168" stroke={CU} strokeWidth="10" />
     <path d="M 24 100 H 118" stroke={CU} strokeWidth="5.5" />
     <Lbl x={152} y={37} tone={GOLD} anchor="start">PWR 0.5 mm</Lbl>
-    <Lbl x={180} y={71} tone={GOLD} anchor="start">SIG 0.25</Lbl>
+    <Lbl x={176} y={71} tone={GOLD} anchor="start">SIG 0.25</Lbl>
     <Lbl x={130} y={103} tone={GOLD} anchor="start">AUX 0.15</Lbl>
     <Mark x={198} y={100} ok />
   </Mini>
@@ -361,7 +372,7 @@ const Creepage = () => (
     <Dim x1={96} y1={66} x2={110} y2={66} label="" tone={BAD} />
     <Lbl x={103} y={56} tone={BAD} size={8}>0.4!</Lbl>
     <path d="M 100 14 l -6 10 h 6 l -5 10" fill="none" stroke={BAD} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-    <Lbl x={140} y={24} tone={BAD} anchor="start">tracking arc risk</Lbl>
+    <Lbl x={212} y={24} tone={BAD} anchor="end">tracking arc risk</Lbl>
   </Mini>
 );
 
@@ -515,7 +526,7 @@ const WrongCap = () => (
     <path d="M 82 58 H 119" stroke={CU} strokeWidth="4" />
     <CapGV x={128} y={58} />
     <path d="M 137 58 H 176" stroke={CU} strokeWidth="4" />
-    <Lbl x={188} y={61} tone={DIM} size={7.5}>to load</Lbl>
+    <Lbl x={184} y={61} tone={DIM} size={7.5}>to load</Lbl>
     <Callout x={128} y={58} r={22} />
     <Lbl x={110} y={96} tone={BAD} size={10}>22 pF !</Lbl>
     <Lbl x={110} y={110} tone={GOOD} size={8}>wanted 22 µF</Lbl>
@@ -752,7 +763,7 @@ const ViaKeepout = () => (
     <path d="M 20 68 H 96 M 124 68 H 200" stroke={CU} strokeWidth="5" />
     <path d="M 96 68 H 124" stroke={BAD} strokeWidth="1.6" strokeDasharray="4 3" />
     <Callout x={110} y={68} r={18} />
-    <Lbl x={44} y={116} tone={BAD} anchor="start" size={7.5}>squeezing past = drill-tolerance roulette</Lbl>
+    <Lbl x={110} y={116} tone={BAD} size={7.5}>tight squeeze = drill roulette</Lbl>
   </Mini>
 );
 
