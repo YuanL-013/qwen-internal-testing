@@ -10,12 +10,13 @@ export default function CategorySection({ category, index }: { category: Categor
     <section id={`cat-${category.id}`} className="relative border-b border-edgesoft py-12 lg:py-16">
       <span
         aria-hidden
-        className="pointer-events-none absolute right-2 top-6 select-none font-display text-[7rem] font-bold leading-none text-raise lg:text-[9rem]"
+        className="pointer-events-none absolute -right-2 top-2 z-0 select-none font-display text-[8rem] font-bold leading-none lg:-right-4 lg:top-4 lg:text-[11rem]"
+        style={{ WebkitTextStroke: "1px rgba(233,242,234,0.07)", color: "transparent" }}
       >
         {String(index + 1).padStart(2, "0")}
       </span>
 
-      <div className="relative">
+      <div className="relative z-10">
         <Reveal>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             <span className="border border-copper/60 bg-copper/10 px-2.5 py-1 font-mono text-[12px] font-semibold tracking-[0.24em] text-copperlt">
