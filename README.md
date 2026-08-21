@@ -69,6 +69,7 @@ CAN/clock, etc.). Inside it there's an `"examples": [ ... ]` list.
 | `reason` | The *why*. | This is hidden behind a "Why this works/fails" tap on the card. |
 | `tags` | A few lowercase keywords. | Powers the search box. |
 | `diagram` **or** `image` | The visual — see below. | Use **one** of these, not both. |
+| `level` *(optional)* | `"advanced"` to show a small **PRO** badge. | Leave it out for day-one rules. |
 
 > **Punctuation tip:** each example object ends with a comma `,` *except* the very last one in a
 > list. If the site goes blank after your edit, you almost certainly added or dropped a comma.
@@ -81,15 +82,17 @@ You have two choices:
 hand-drawn SVG illustrations that always look consistent.
 
 ```
-corners  corner90  netclass  neckdown  stub
+corners  corner90  netclass  neckdown  stub  gridplace  routeorder
 relief  stitch  decap  decapbunch  thermalvias  railzone  thinrail  wrongcap
-canpair  cansplit  xtal  xtalring  viakeepout
-schflow  netnaming  decal  erc
-footprint  pin1  xh  sketchfp  mirror  headergap
-refdes  silkhdr  silkpad  nopolarity
-drc  sliver  creepage
-gerbers  drill  datasheet
-teardrop  antipad  caporient  courtyard  mount  testpts  fiducials  starpoint
+icdecap  capladder  reversepol  polyfuse
+hcpoly  viaarray  hcloop
+canpair  cansplit  xtal  xtalring  viakeepout  usbpair  esd  seriesres
+schflow  netnaming  decal  erc  unusedpins  swdhdr
+footprint  pin1  xh  sketchfp  mirror  headergap  orient  stdparts  edgeplace  keyed  maskdam
+refdes  silkhdr  silkpad  nopolarity  revsilk
+drc  sliver  creepage  rfkeepout  panel
+gerbers  drill  datasheet  mechlayer
+teardrop  antipad  caporient  courtyard  mount  testpts  fiducials  starpoint  returnsplit  threew
 ```
 
 **Option B — a real photo** (great for "we actually saw this on a board").

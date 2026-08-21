@@ -88,6 +88,11 @@ export default function GuideLegend() {
                 <span className="font-mono text-[11px] tracking-[0.12em]">ALL</span> and search for the word on your
                 mind — “via”, “CAN”, “silk”.
               </AnatomyRow>
+              <AnatomyRow tone="bg-dim">
+                <span className="font-mono text-[10px] tracking-[0.16em] text-copperlt">PRO</span>{" "}
+                <span className="text-ink">means “come back in week two”.</span> Unmarked cards are day-one rules
+                everyone follows; PRO cards assume you know the basics. Read both eventually — the order is up to you.
+              </AnatomyRow>
             </ul>
           </Reveal>
 
@@ -95,11 +100,22 @@ export default function GuideLegend() {
             <Reveal delay={200}>
               <div className="h-full border border-edge bg-panel/70 p-4">
                 <p className="flex items-center gap-2 font-mono text-[10.5px] tracking-[0.22em] text-copperlt">
-                  <IcInfo size={13} /> IF YOU'RE NEW
+                  <IcInfo size={13} /> NEW TO PCBs? DO THIS ORDER
                 </p>
-                <p className="mt-2 text-[13px] leading-relaxed text-dim">
-                  Read this guide once before you start routing. Then keep the checklist at the bottom open while you
-                  work — it's the same list the team runs before any board goes to the fab.
+                <ol className="mt-2 space-y-1.5">
+                  {[
+                    ["01", "The glossary right below — two minutes, twelve words"],
+                    ["02", "Trace Routing, then Power & Grounding — the day-one chapters"],
+                    ["03", "The pre-flight checklist at the bottom — keep it open while you work"],
+                  ].map(([n, s]) => (
+                    <li key={n} className="flex items-baseline gap-2 text-[13px] leading-relaxed text-dim">
+                      <span className="font-mono text-[10px] text-copperlt">{n}</span> {s}
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-2 text-[12px] leading-relaxed text-faint">
+                  Cards marked <span className="font-mono text-[10px] tracking-[0.14em] text-copperlt">PRO</span> can
+                  wait until you've routed a board or two.
                 </p>
               </div>
             </Reveal>

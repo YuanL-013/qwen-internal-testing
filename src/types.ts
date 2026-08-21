@@ -15,6 +15,8 @@ export interface Example {
   image?: string;
   /** Set true to keep the finding in the file without showing it on the site. */
   hidden?: boolean;
+  /** Omit (or "basics") for day-one rules; "advanced" shows a small PRO badge. */
+  level?: "basics" | "advanced";
 }
 
 export interface Category {

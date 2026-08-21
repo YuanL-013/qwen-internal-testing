@@ -68,6 +68,14 @@ export default function ExampleCard({
             <span className="font-mono text-[10px] tracking-[0.2em] text-faint">
               {code}-{String(index + 1).padStart(2, "0")}
             </span>
+            {example.level === "advanced" && (
+              <span
+                className="border border-copper/50 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.18em] text-copperlt"
+                title="A bit advanced — assumes you know the basics. Read it when you're ready."
+              >
+                PRO
+              </span>
+            )}
             <span
               className={`ml-auto font-mono text-[10px] tracking-[0.16em] ${pass ? "text-pass/90" : "text-fail/90"}`}
             >

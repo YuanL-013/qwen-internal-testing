@@ -1200,6 +1200,176 @@ const MechLayer = () => (
   </Mini>
 );
 
+/* ------------------------------ convention batch G ------------------------------ */
+
+const Keyed = () => (
+  <Mini caption="KEYED = PLUGS IN ONE WAY ONLY">
+    {/* header on board */}
+    <rect x="30" y="30" width="26" height="72" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    {[44, 62, 80, 98].map((y) => (
+      <ThPad key={y} x={43} y={y} />
+    ))}
+    <rect x="52" y="58" width="8" height="16" fill={SILK} opacity="0.9" />
+    <Lbl x={43} y={22} tone={SILK} size={8}>HDR</Lbl>
+    {/* plug, aligned */}
+    <rect x="96" y="38" width="34" height="56" rx="3" fill="#0f231b" stroke={GOLD} strokeWidth="1.6" />
+    <rect x="92" y="58" width="8" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.6" />
+    <path d="M 78 66 H 88 M 85 62 L 89 66 L 85 70" stroke={GOOD} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <Lbl x={113} y={112} tone={GOOD} size={7.5}>key matches slot</Lbl>
+    {/* plug, flipped — won't fit */}
+    <rect x="158" y="38" width="34" height="56" rx="3" fill="#0f231b" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
+    <rect x="188" y="58" width="8" height="16" fill="#0f231b" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
+    <path d="M 146 66 H 154 M 151 62 L 155 66 L 151 70" stroke={BAD} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M 168 60 L 182 74 M 182 60 L 168 74" stroke={BAD} strokeWidth="2.2" strokeLinecap="round" />
+    <Lbl x={175} y={112} tone={BAD} size={7.5}>flipped: won't fit</Lbl>
+    <Callout x={56} y={66} r={20} tone={GOOD} />
+  </Mini>
+);
+
+const UsbPair = () => (
+  <Mini caption="USB = MATCHED DIFFERENTIAL PAIR">
+    <path d="M 22 52 H 198" stroke={CU} strokeWidth="5" />
+    <path d="M 22 78 H 198" stroke={CU} strokeWidth="5" />
+    <path d="M 22 65 H 198" stroke={DIM} strokeWidth="1" strokeDasharray="4 4" opacity="0.7" />
+    {/* mirror ticks */}
+    {[50, 90, 130, 170].map((x) => (
+      <g key={x}>
+        <path d={`M ${x} 45 V 49`} stroke={GOOD} strokeWidth="1.6" />
+        <path d={`M ${x} 81 V 85`} stroke={GOOD} strokeWidth="1.6" />
+      </g>
+    ))}
+    <Lbl x={32} y={42} tone={GOLD} size={8} anchor="start">D+</Lbl>
+    <Lbl x={32} y={96} tone={GOLD} size={8} anchor="start">D−</Lbl>
+    <Lbl x={110} y={30} tone={GOOD} size={8}>same length · same bends · 90 Ω</Lbl>
+    <Lbl x={110} y={112} tone={DIM} size={7}>no stubs, no layer hops mid-pair</Lbl>
+    <Callout x={110} y={65} r={30} tone={GOOD} />
+  </Mini>
+);
+
+const RouteOrder = () => (
+  <Mini caption="ROUTE THE IMPORTANT STUFF FIRST">
+    {/* lane 1: power */}
+    <rect x="52" y="26" width="140" height="16" fill={CU} opacity="0.95" />
+    <rect x="24" y="26" width="20" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.2" />
+    <Lbl x={34} y={37} tone={GOLD} size={8}>1</Lbl>
+    <Lbl x={196} y={37} tone={GOLD} size={7} anchor="end">power rails</Lbl>
+    {/* lane 2: high-speed */}
+    <path d="M 52 60 H 192" stroke={CU} strokeWidth="4" />
+    <path d="M 52 70 H 192" stroke={CU} strokeWidth="4" />
+    <rect x="24" y="58" width="20" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.2" />
+    <Lbl x={34} y={69} tone={GOLD} size={8}>2</Lbl>
+    <Lbl x={196} y={69} tone={GOLD} size={7} anchor="end">CAN / USB</Lbl>
+    {/* lane 3: signals */}
+    <path d="M 52 96 H 192" stroke={CU} strokeWidth="2" opacity="0.7" />
+    <rect x="24" y="90" width="20" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.2" />
+    <Lbl x={34} y={101} tone={GOLD} size={8}>3</Lbl>
+    <Lbl x={196} y={101} tone={GOLD} size={7} anchor="end">everything else</Lbl>
+    <Lbl x={110} y={122} tone={DIM} size={7}>the leftovers always find a way — the rails won't</Lbl>
+  </Mini>
+);
+
+const EdgePlace = () => (
+  <Mini caption="CONNECTORS AT THE EDGE">
+    <rect x="16" y="20" width="188" height="92" rx="6" fill="none" stroke={SILK} strokeWidth="1.4" />
+    {/* connector pads at right edge */}
+    {[40, 56, 72, 88].map((y) => (
+      <Smd key={y} x={186} y={y - 5} w={14} h={10} />
+    ))}
+    <path d="M 216 66 H 204 M 208 62 L 204 66 L 208 70" stroke={GOOD} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <Lbl x={160} y={32} tone={GOOD} size={7} anchor="end">cables reach</Lbl>
+    {/* tall part kept back from edge */}
+    <rect x="48" y="44" width="52" height="44" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <Lbl x={74} y={70} tone={SILK} size={8}>tall part</Lbl>
+    <Hatch x={22} y={26} w={14} h={80} tone="#2b6a50" gap={6} />
+    <Lbl x={56} y={104} tone={DIM} size={7} anchor="start">kept off the edge</Lbl>
+    <Callout x={193} y={66} r={22} tone={GOOD} />
+  </Mini>
+);
+
+const IcDecap = () => (
+  <Mini caption="EVERY IC GETS ITS OWN CAPS">
+    <rect x="62" y="34" width="66" height="64" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={95} y={64} tone={SILK} size={9}>DRIVER</Lbl>
+    <Lbl x={95} y={76} tone={DIM} size={6.5}>IC</Lbl>
+    {/* pins */}
+    {[44, 58, 72, 86].map((y) => (
+      <g key={y}>
+        <Smd x={48} y={y - 4} w={14} h={8} />
+        <Smd x={128} y={y - 4} w={14} h={8} />
+      </g>
+    ))}
+    {/* caps at the two VDD pins (top-left, top-right) */}
+    <path d="M 40 44 H 20 V 30 H 30" stroke={CU} strokeWidth="2.4" fill="none" />
+    <CapGV x={38} y={44} />
+    <path d="M 150 44 H 170 V 30 H 160" stroke={CU} strokeWidth="2.4" fill="none" />
+    <CapGV x={152} y={44} />
+    <Lbl x={38} y={22} tone={GOOD} size={6.5}>100 n</Lbl>
+    <Lbl x={152} y={22} tone={GOOD} size={6.5}>100 n</Lbl>
+    <Callout x={38} y={44} r={15} tone={GOOD} />
+    <Callout x={152} y={44} r={15} tone={GOOD} />
+    <Lbl x={110} y={116} tone={DIM} size={7}>not just the MCU — every chip with a power pin</Lbl>
+  </Mini>
+);
+
+const CapLadder = () => (
+  <Mini caption="BULK + CERAMIC TEAM UP">
+    {/* connector */}
+    <rect x="18" y="44" width="22" height="44" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <Lbl x={29} y={68} tone={SILK} size={6.5}>IN</Lbl>
+    {/* bulk electrolytic */}
+    <path d="M 40 66 H 62" stroke={CU} strokeWidth="4" />
+    <circle cx="76" cy="66" r="13" fill="#17362a" stroke={GOLD} strokeWidth="1.6" />
+    <path d="M 70 60 V 72 M 82 60 V 72" stroke={GOLD} strokeWidth="1.4" />
+    <Lbl x={76} y={92} tone={GOLD} size={6.5}>22 µF bulk</Lbl>
+    {/* rail to IC */}
+    <path d="M 89 66 H 150" stroke={CU} strokeWidth="4" />
+    {/* ceramic at IC */}
+    <rect x="150" y="50" width="34" height="32" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <Lbl x={167} y={69} tone={SILK} size={7}>IC</Lbl>
+    <CapG x={140} y={44} />
+    <path d="M 140 52 V 62" stroke={CU} strokeWidth="2.2" />
+    <Lbl x={140} y={30} tone={GOOD} size={6.5}>100 n</Lbl>
+    <Callout x={76} y={66} r={20} tone={GOOD} />
+    <Callout x={140} y={44} r={14} tone={GOOD} />
+    <Lbl x={110} y={116} tone={DIM} size={7}>big tank at the door, quick tank at the pin</Lbl>
+  </Mini>
+);
+
+const SwdHdr = () => (
+  <Mini caption="SWD HEADER = A WAY BACK IN">
+    <rect x="60" y="34" width="100" height="64" rx="4" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    {[46, 60, 74, 88].map((y, i) => (
+      <g key={y}>
+        <ThPad x={76} y={y} />
+        <Lbl x={150} y={y + 3} tone={SILK} size={7} anchor="end">
+          {["SWDIO", "SWCLK", "GND", "3V3"][i]}
+        </Lbl>
+      </g>
+    ))}
+    <circle cx="76" cy="46" r="8" fill="none" stroke={GOOD} strokeWidth="1.5" />
+    <Lbl x={92} y={24} tone={GOOD} size={7}>pin 1 marked</Lbl>
+    <Lbl x={110} y={116} tone={DIM} size={7}>labelled + reachable after assembly</Lbl>
+    <Callout x={76} y={66} r={30} tone={GOOD} />
+  </Mini>
+);
+
+const MaskDam = () => (
+  <Mini caption="MASK DAM BETWEEN PADS">
+    {/* two 0402 pads, zoomed */}
+    <Smd x={62} y={50} w={40} h={32} />
+    <Smd x={122} y={50} w={40} h={32} />
+    {/* mask dam bridge over the gap */}
+    <rect x="100" y="44" width="24" height="44" fill="#2b6a50" opacity="0.55" />
+    <rect x="100" y="44" width="24" height="44" fill="none" stroke={GOOD} strokeWidth="1.6" />
+    <Callout x={112} y={66} r={26} tone={GOOD} />
+    <Lbl x={112} y={30} tone={GOOD}>mask covers the gap</Lbl>
+    <Lbl x={112} y={104} tone={DIM} size={7}>solder can't bridge across</Lbl>
+    {/* pads stay exposed only where needed */}
+    <Lbl x={82} y={100} tone={DIM} size={6}>pad</Lbl>
+    <Lbl x={142} y={100} tone={DIM} size={6}>pad</Lbl>
+  </Mini>
+);
+
 /* ------------------------------------------------------------------ */
 
 export const DIAGRAMS: Record<string, () => ReactElement> = {
@@ -1271,6 +1441,15 @@ export const DIAGRAMS: Record<string, () => ReactElement> = {
   stdparts: StdParts,
   rfkeepout: RfKeepout,
   mechlayer: MechLayer,
+  // convention batch G
+  keyed: Keyed,
+  usbpair: UsbPair,
+  routeorder: RouteOrder,
+  edgeplace: EdgePlace,
+  icdecap: IcDecap,
+  capladder: CapLadder,
+  maskdam: MaskDam,
+  swdhdr: SwdHdr,
 };
 
 export const DIAGRAM_OPTIONS: Array<{ value: string; label: string }> = [
@@ -1339,4 +1518,12 @@ export const DIAGRAM_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "stdparts", label: "Standard part packages" },
   { value: "rfkeepout", label: "RF keepout under the antenna" },
   { value: "mechlayer", label: "Edge cuts on its own layer" },
+  { value: "keyed", label: "Keyed connector (one way)" },
+  { value: "usbpair", label: "USB matched differential pair" },
+  { value: "routeorder", label: "Routing order of operations" },
+  { value: "edgeplace", label: "Connectors at the board edge" },
+  { value: "icdecap", label: "Decoupling every IC" },
+  { value: "capladder", label: "Bulk + ceramic cap ladder" },
+  { value: "maskdam", label: "Solder mask dam between pads" },
+  { value: "swdhdr", label: "SWD debug header" },
 ];

@@ -10,6 +10,7 @@ import CategorySection from "./components/CategorySection";
 import Checklist from "./components/Checklist";
 import Readings from "./components/Readings";
 import Credit from "./components/Credit";
+import Glossary from "./components/Glossary";
 
 import Reveal from "./components/Reveal";
 import { IcSearch } from "./components/Icons";
@@ -92,7 +93,7 @@ export default function App() {
 
       <TitleBlock scheme={scheme} source={source} />
 
-      <GuideLegend />
+      <Glossary />
 
       <CategoryNav
         categories={scheme.categories.filter((c) => !c.hidden)}
