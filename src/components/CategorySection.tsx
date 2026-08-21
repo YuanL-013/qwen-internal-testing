@@ -8,13 +8,14 @@ export default function CategorySection({ category, index }: { category: Categor
 
   return (
     <section id={`cat-${category.id}`} className="relative border-b border-edgesoft py-12 lg:py-16">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-2 top-2 z-0 select-none font-display text-[8rem] font-bold leading-none lg:-right-4 lg:top-4 lg:text-[11rem]"
-        style={{ WebkitTextStroke: "1px rgba(233,242,234,0.07)", color: "transparent" }}
-      >
-        {String(index + 1).padStart(2, "0")}
-      </span>
+      <Reveal>
+        <p className="mb-4 flex items-center gap-3 font-mono text-[10.5px] tracking-[0.28em] text-faint">
+          <span className="border border-edge bg-panel/70 px-2 py-0.5 text-copperlt">
+            SECTION {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="h-px flex-1 bg-edgesoft" />
+        </p>
+      </Reveal>
 
       <div className="relative z-10">
         <Reveal>
