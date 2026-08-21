@@ -911,6 +911,132 @@ const Erc = () => (
   </Mini>
 );
 
+/* ---- high-current + professional-convention batch ---- */
+
+const HcPoly = () => (
+  <Mini caption="COPPER AREA CARRIES THE AMPS">
+    <Hatch x={22} y={30} w={120} h={72} />
+    <path d="M 142 66 H 196" stroke={CU} strokeWidth="14" strokeLinecap="round" />
+    <Dim x1={22} y1={16} x2={142} y2={16} label="wide polygon, not a trace" tone={GOOD} />
+    <path d="M 188 58 l 8 8 l -8 8" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Lbl x={82} y={62} tone="#7fd6b4" size={8}>CURRENT</Lbl>
+    <Lbl x={82} y={76} tone="#7fd6b4" size={8}>SPREADS OUT</Lbl>
+    <Lbl x={170} y={92} tone={DIM} size={7}>to load</Lbl>
+  </Mini>
+);
+
+const ViaArray = () => (
+  <Mini caption="VIAS IN PARALLEL SHARE CURRENT">
+    <path d="M 20 66 H 44" stroke={CU} strokeWidth="8" strokeLinecap="round" />
+    {[66, 100, 134].map((x) =>
+      [46, 86].map((y) => (
+        <g key={`${x}-${y}`}>
+          <circle cx={x} cy={y} r="7" fill={GOLD} />
+          <circle cx={x} cy={y} r="2.8" fill="#0d281e" />
+        </g>
+      ))
+    )}
+    <path d="M 156 66 H 196" stroke={CU} strokeWidth="8" strokeLinecap="round" />
+    <path d="M 190 58 l 8 8 l -8 8" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Lbl x={100} y={26} tone={GOOD} size={7.5}>6 vias = 6 current paths</Lbl>
+    <Lbl x={100} y={116} tone={DIM} size={7}>each via carries a share — none bottlenecks</Lbl>
+  </Mini>
+);
+
+const HcLoop = () => (
+  <Mini caption="CURRENT LOOPS STAY TIGHT">
+    <path d="M 24 96 H 40 V 30 H 180 V 96 H 196" fill="none" stroke={CU} strokeWidth="6" strokeLinejoin="round" />
+    <Callout x={110} y={63} r={32} />
+    <Lbl x={110} y={20} tone={BAD} size={7.5}>long detour = inductance + heat</Lbl>
+    <Lbl x={110} y={60} tone={BAD} size={7}>loop area</Lbl>
+    <Lbl x={110} y={72} tone={BAD} size={7}>should be tiny</Lbl>
+    <path d="M 24 88 v 8 M 196 88 v 8" stroke={DIM} strokeWidth="1.4" />
+    <Lbl x={30} y={112} tone={DIM} size={7} anchor="start">source</Lbl>
+    <Lbl x={190} y={112} tone={DIM} size={7} anchor="end">load</Lbl>
+  </Mini>
+);
+
+const GridPlace = () => (
+  <Mini caption="PLACE ON A GRID, THEN ROUTE">
+    <path d="M 46 24 V 108 M 124 24 V 108" stroke={GOOD} strokeWidth="1" strokeDasharray="2 3" opacity="0.5" />
+    <path d="M 20 44 H 200 M 20 84 H 200" stroke={GOOD} strokeWidth="1" strokeDasharray="2 3" opacity="0.5" />
+    <rect x={46} y={44} width={44} height={26} fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <rect x={124} y={44} width={44} height={26} fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <rect x={85} y={84} width={44} height={26} fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <Lbl x={110} y={16} tone={GOOD} size={7.5}>parts snapped to the grid</Lbl>
+  </Mini>
+);
+
+const ReturnSplit = () => (
+  <Mini caption="RETURN CURRENT HATES SPLIT PLANES">
+    <path d="M 24 36 H 196" stroke={CU} strokeWidth="4" />
+    <Hatch x={20} y={62} w={72} h={46} />
+    <Hatch x={128} y={62} w={72} h={46} />
+    <path d="M 186 62 H 140 V 100 H 80 V 62 H 34" fill="none" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
+    <path d="M 34 62 l -5 -4 M 34 62 l 5 -4" stroke={BAD} strokeWidth="1.4" />
+    <Lbl x={110} y={54} tone={BAD} size={7.5}>signal crosses the split</Lbl>
+    <Lbl x={110} y={120} tone={BAD} size={7}>return loops around = antenna</Lbl>
+    <Lbl x={56} y={88} tone="#7fd6b4" size={7}>GND</Lbl>
+    <Lbl x={164} y={88} tone="#7fd6b4" size={7}>GND</Lbl>
+  </Mini>
+);
+
+const ThreeW = () => (
+  <Mini caption="≥ 3× TRACE WIDTH APART">
+    <path d="M 22 36 H 198" stroke={CU} strokeWidth="6" />
+    <path d="M 22 66 H 198" stroke={CU} strokeWidth="6" />
+    <path d="M 22 96 H 198" stroke={CU} strokeWidth="6" />
+    <Dim x1={150} y1={36} x2={150} y2={66} label="3W" tone={GOOD} />
+    <Dim x1={150} y1={66} x2={150} y2={96} label="3W" tone={GOOD} />
+    <Lbl x={40} y={26} tone={DIM} size={7} anchor="start">fast nets, parallel</Lbl>
+    <Lbl x={110} y={116} tone={GOOD} size={7}>coupling drops off fast with spacing</Lbl>
+  </Mini>
+);
+
+const Orient = () => (
+  <Mini caption="EVERY STRIPE THE SAME WAY">
+    {[34, 76, 118, 160].map((x) => (
+      <g key={x}>
+        <rect x={x} y={44} width={26} height={38} rx="3" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+        <rect x={x + 18} y={44} width={6} height={38} fill="#2b6a50" />
+        <path d={`M ${x + 21} 50 v 4 M ${x + 21} 60 v 4`} stroke={SILK} strokeWidth="1.2" />
+      </g>
+    ))}
+    <Lbl x={113} y={32} tone={SILK} size={7.5}>stripe = cathode / minus</Lbl>
+    <path d="M 40 96 H 186" stroke={GOOD} strokeWidth="1.4" />
+    <path d="M 180 90 l 8 6 l -8 6" fill="none" stroke={GOOD} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    <Lbl x={110} y={116} tone={GOOD} size={7}>one backwards part now sticks out</Lbl>
+  </Mini>
+);
+
+const RevSilk = () => (
+  <Mini caption="IDENTIFY EVERY BOARD">
+    <rect x={24} y={26} width={172} height={80} rx="6" fill="none" stroke={SILK} strokeWidth="1.3" />
+    <circle cx={36} cy={38} r="4" fill={GOLD} />
+    <circle cx={36} cy={38} r="1.6" fill="#0d281e" />
+    <text x={36} y={92} fontFamily={MONO} fontSize="9" fill={SILK}>ROBO-PWR · REV D</text>
+    <text x={36} y={102} fontFamily={MONO} fontSize="6.5" fill={DIM}>2026-02 · HKUST ROBOTICS</text>
+    <Callout x={82} y={94} r={34} tone={GOOD} />
+    <Lbl x={160} y={48} tone={GOOD} size={7}>read it in the lab,</Lbl>
+    <Lbl x={160} y={60} tone={GOOD} size={7}>not in the CAD</Lbl>
+  </Mini>
+);
+
+const Panel = () => (
+  <Mini caption="PANELS & BREAKAWAYS">
+    <rect x={20} y={30} width={180} height={72} rx="8" fill="none" stroke={SILK} strokeWidth="1.3" />
+    <path d="M 110 30 V 102" stroke={DIM} strokeWidth="1.2" strokeDasharray="5 3" />
+    {[38, 48, 58, 68, 78, 88, 98].map((y) => (
+      <circle key={y} cx={110} cy={y} r="1.8" fill={DIM} />
+    ))}
+    <rect x={28} y={38} width={70} height={56} rx="4" fill="none" stroke={SILK} strokeWidth="1" opacity="0.6" />
+    <rect x={122} y={38} width={70} height={56} rx="4" fill="none" stroke={SILK} strokeWidth="1" opacity="0.6" />
+    <Callout x={28} y={38} r={13} tone={GOOD} />
+    <Lbl x={64} y={20} tone={GOOD} size={7}>rounded corners don't snap</Lbl>
+    <Lbl x={110} y={118} tone={DIM} size={7}>V-score / mouse bites = clean breakout</Lbl>
+  </Mini>
+);
+
 /* ------------------------------------------------------------------ */
 
 export const DIAGRAMS: Record<string, () => ReactElement> = {
@@ -964,6 +1090,16 @@ export const DIAGRAMS: Record<string, () => ReactElement> = {
   netnaming: NetNaming,
   decal: Decal,
   erc: Erc,
+  // high-current + professional-convention batch
+  hcpoly: HcPoly,
+  viaarray: ViaArray,
+  hcloop: HcLoop,
+  gridplace: GridPlace,
+  returnsplit: ReturnSplit,
+  threew: ThreeW,
+  orient: Orient,
+  revsilk: RevSilk,
+  panel: Panel,
 };
 
 export const DIAGRAM_OPTIONS: Array<{ value: string; label: string }> = [
@@ -1015,4 +1151,13 @@ export const DIAGRAM_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "netnaming", label: "One rail, one net name" },
   { value: "decal", label: "Decoupling cap at its pin" },
   { value: "erc", label: "ERC clean report" },
+  { value: "hcpoly", label: "High-current polygon pour" },
+  { value: "viaarray", label: "Via array current sharing" },
+  { value: "hcloop", label: "Tight high-current loop" },
+  { value: "gridplace", label: "Placement on a grid" },
+  { value: "returnsplit", label: "Return path vs plane split" },
+  { value: "threew", label: "3W crosstalk spacing" },
+  { value: "orient", label: "Polarised part orientation" },
+  { value: "revsilk", label: "Rev/date on silkscreen" },
+  { value: "panel", label: "Panel rails & breakaways" },
 ];

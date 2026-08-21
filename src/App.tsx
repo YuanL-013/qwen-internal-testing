@@ -9,6 +9,7 @@ import CategoryNav, { type VerdictFilter } from "./components/CategoryNav";
 import CategorySection from "./components/CategorySection";
 import Checklist from "./components/Checklist";
 import Readings from "./components/Readings";
+import Credit from "./components/Credit";
 
 import Reveal from "./components/Reveal";
 import { IcSearch } from "./components/Icons";
@@ -154,6 +155,8 @@ export default function App() {
           </Reveal>
         </div>
       </footer>
+
+      <Credit name={scheme.meta.initiatedBy} />
     </div>
   );
 }

@@ -236,17 +236,20 @@ At the top of the file:
 "meta": {
   "team": "HKUST Robotics Team",
   "doc": "STD-PCB-01",
-  "rev": "F2",
-  "updated": "2026-02-27",
-  "maintainer": "the Hardware Division"
+  "rev": "F3",
+  "updated": "2026-02-28",
+  "maintainer": "the Hardware Division",
+  "initiatedBy": "the first hardware batch"
 }
 ```
 
-- **`rev`** — bump it each time you publish a change (`F2` → `G` → `H`…). Letters, or letter +
+- **`rev`** — bump it each time you publish a change (`F3` → `G` → `H`…). Letters, or letter +
   number for small fixes. The site only trusts a data file whose revision is *the same as or newer
   than* the one it was built with, so an old copy can never clobber new content.
 - **`updated`** — set to today's date in `YYYY-MM-DD` form.
 - **`maintainer`** — shown in the footer as "MAINTAINED BY …", so trainees know who to ask.
+- **`initiatedBy`** — shown as a large, subtle watermark at the very bottom of the page to credit
+  whoever started the project. Leave it out to hide the credit line entirely.
 
 ---
 

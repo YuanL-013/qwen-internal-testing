@@ -45,6 +45,7 @@ export interface SchemeMeta {
   rev: string;
   updated: string; // ISO yyyy-mm-dd
   maintainer?: string; // shown in the footer
+  initiatedBy?: string; // blended credit line at the very bottom of the page
 }
 
 export interface Scheme {

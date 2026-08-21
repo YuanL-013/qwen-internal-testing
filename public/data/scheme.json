@@ -2,9 +2,10 @@
   "meta": {
     "team": "HKUST Robotics Team",
     "doc": "STD-PCB-01",
-    "rev": "F2",
-    "updated": "2026-02-27",
-    "maintainer": "the Hardware Division"
+    "rev": "F3",
+    "updated": "2026-02-28",
+    "maintainer": "the Hardware Division",
+    "initiatedBy": "the first hardware batch"
   },
   "categories": [
     {
@@ -66,6 +67,15 @@
           "reason": "At speed, an open stub rings and radiates — a little antenna you didn't order. When a net moves, delete the old copper. Don't leave tails.",
           "tags": ["routing", "cleanup"],
           "diagram": "stub"
+        },
+        {
+          "id": "ex-gridplace",
+          "title": "Placement first, snapped to a grid",
+          "verdict": "pass",
+          "description": "Every part is placed and signed off before a single trace is routed — parts snapped to a 0.5–1 mm grid, lined up in tidy rows.",
+          "reason": "Routing a bad placement is just decorating a mistake. When parts sit on a grid the short, obvious routes appear by themselves, and the board reads like it was drawn on purpose.",
+          "tags": ["placement", "workflow"],
+          "diagram": "gridplace"
         }
       ]
     },
@@ -168,6 +178,41 @@
       ]
     },
     {
+      "id": "cat-hc",
+      "code": "HC",
+      "name": "High-Current Design",
+      "blurb": "Amps don't care how hard you tried — high-current paths want copper area and short loops, not long skinny traces.",
+      "examples": [
+        {
+          "id": "ex-hc-poly",
+          "title": "High-current paths ride on polygons",
+          "verdict": "pass",
+          "description": "Battery feeds, motor outputs and switcher nodes are carried by copper polygons (zone pours), not by routed traces — current spreads through wide copper on one or more layers.",
+          "reason": "A trace's current limit is set by its width and by how hot it's allowed to get; a polygon removes both problems. Wide copper means low resistance, less voltage drop, and the whole area doubles as a heat spreader. Copper is free — spend it where the amps are.",
+          "tags": ["power", "polygons"],
+          "diagram": "hcpoly"
+        },
+        {
+          "id": "ex-hc-viaarray",
+          "title": "Via arrays share the load",
+          "verdict": "pass",
+          "description": "Wherever current has to change layers, it crosses through a grid of vias in parallel — never a single one.",
+          "reason": "One via safely carries roughly half an amp to an amp before it heats up. A via array splits the current between many holes so no single via becomes a bottleneck — or a fuse.",
+          "tags": ["vias", "power"],
+          "diagram": "viaarray"
+        },
+        {
+          "id": "ex-hc-loop",
+          "title": "High-current loops sent the long way round",
+          "verdict": "fail",
+          "description": "A motor or battery path routed on a long detour across the board instead of a tight, direct loop.",
+          "reason": "Every extra millimetre of loop adds resistance (heat) and inductance (voltage spikes when the load switches). Keep the source, the switch and the load close, and route the loop tight around them.",
+          "tags": ["power", "layout"],
+          "diagram": "hcloop"
+        }
+      ]
+    },
+    {
       "id": "cat-bus",
       "code": "BUS",
       "name": "CAN, Clock & Signals",
@@ -217,6 +262,24 @@
           "reason": "Any noise that lands on one wire but not the other shows up straight at the receiver — the one kind of noise CAN can't ignore. Re-pair them, even loosely, and steer both wires around the noisy copper.",
           "tags": ["can", "noise"],
           "diagram": "cansplit"
+        },
+        {
+          "id": "ex-returnsplit",
+          "title": "Signals crossing a plane split",
+          "verdict": "fail",
+          "description": "A fast net routed straight over a gap or split in the ground plane beneath it.",
+          "reason": "Signal current goes out on the trace and comes back directly underneath it, on the plane. When the plane is split there's no path back — so the return detours all the way around the gap, making a big loop that radiates and picks up noise. Route around splits, or keep the plane continuous.",
+          "tags": ["grounding", "signal integrity"],
+          "diagram": "returnsplit"
+        },
+        {
+          "id": "ex-3w",
+          "title": "Fast parallel nets keep their distance",
+          "verdict": "pass",
+          "description": "Parallel high-speed traces spaced at least three trace-widths apart (the old “3W rule”), centre to centre.",
+          "reason": "Crosstalk — one net whispering into its neighbour — falls off steeply with spacing. At ~3W the coupling is small enough to ignore for our buses. Closer than that and edges start smearing into each other.",
+          "tags": ["routing", "crosstalk"],
+          "diagram": "threew"
         }
       ]
     },
@@ -323,6 +386,15 @@
           "reason": "XH housings are wider than their pins, and plugs need room to approach. Pack headers together and only the first one stays pluggable. Space them for the housings, not for the drill holes.",
           "tags": ["connectors", "placement"],
           "diagram": "headergap"
+        },
+        {
+          "id": "ex-orient",
+          "title": "Polarised parts face one way",
+          "verdict": "pass",
+          "description": "Electrolytic caps, diodes and other polarised parts are rotated the same direction within each region — stripes and cathode bands all aligned.",
+          "reason": "When every stripe points the same way, a backwards part screams at you during hand assembly, and pick-and-place inspection gets trivial. It costs nothing to plan and saves real debugging time.",
+          "tags": ["placement", "assembly"],
+          "diagram": "orient"
         }
       ]
     },
@@ -367,6 +439,15 @@
           "reason": "It forces whoever assembles it to cross-check the schematic for every part — and one wrong guess kills the board at first power-on.",
           "tags": ["silkscreen", "assembly"],
           "diagram": "nopolarity"
+        },
+        {
+          "id": "ex-revsilk",
+          "title": "Board name, rev and date on the silk",
+          "verdict": "pass",
+          "description": "Every board carries its name, document/revision and date in a silkscreen corner — e.g. “ROBO-PWR · REV D · 2026-02”.",
+          "reason": "Six months from now, three board revisions will live in the same drawer. The silkscreen is the only way to tell them apart without a microscope and a prayer. It also lets anyone report which board they're looking at in a bug report.",
+          "tags": ["silkscreen", "documentation"],
+          "diagram": "revsilk"
         }
       ]
     },
@@ -402,6 +483,15 @@
           "reason": "Too little surface distance lets an arc crawl across the board over time — a safety failure, not a cosmetic one. HV nets get their own clearance rules and usually a routed slot.",
           "tags": ["safety", "hv"],
           "diagram": "creepage"
+        },
+        {
+          "id": "ex-panel",
+          "title": "Rounded corners and breakaway rails",
+          "verdict": "pass",
+          "description": "The outer board outline uses rounded corners, and the design allows panel rails with mouse-bites or V-score so boards can be panelised and broken out cleanly.",
+          "reason": "Sharp outside corners snap during fabrication, handling and assembly. Rails let the assembler run a whole panel through pick-and-place and reflow, then snap individual boards out. Small courtesy, big time saved on every order.",
+          "tags": ["dfm", "fab"],
+          "diagram": "panel"
         }
       ]
     },
@@ -458,7 +548,10 @@
     "Header silk: function first, then per-pin map (e.g. UART_GVTR)",
     "Connectors from the library with 3D checked; headers spaced for housings",
     "Every subsystem on the schematic has a power feed — pneumatics included",
-    "Gerber set + drill file verified layer-by-layer in a viewer"
+    "Gerber set + drill file verified layer-by-layer in a viewer",
+    "High-current paths ride polygons + via arrays, never thin traces",
+    "No signal crosses a plane split; parallel fast nets spaced ≥ 3W",
+    "Polarised parts face one way; board name + rev + date on the silk"
   ],
   "readings": [
     {
