@@ -30,6 +30,8 @@ export default function ExampleCard({
   const pass = example.verdict === "pass";
   const Diagram = example.diagram ? DIAGRAMS[example.diagram] : null;
   const [open, setOpen] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImage = !!example.image && !imgFailed;
 
   return (
     <Reveal delay={delay}>
@@ -42,10 +44,11 @@ export default function ExampleCard({
         <div className="relative p-3 pb-0">
           <div className="relative">
             <Ticks />
-            {example.image ? (
+            {showImage ? (
               <img
                 src={example.image}
                 alt={example.title}
+                onError={() => setImgFailed(true)}
                 className="block w-full border border-edgesoft object-cover"
                 style={{ aspectRatio: "5/3" }}
               />
@@ -56,7 +59,7 @@ export default function ExampleCard({
                 <IcChip size={26} />
               </div>
             )}
-            {example.image && (
+            {showImage && (
               <span className="absolute left-2.5 top-2.5 flex items-center gap-1 border border-edge bg-bg/80 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.18em] text-copperlt backdrop-blur-[2px]">
                 <IcImage size={10} /> REAL PHOTO
               </span>

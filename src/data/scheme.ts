@@ -19,7 +19,7 @@ export const DEFAULT_SCHEME: Scheme = {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
     rev: "F1",
-    updated: "2026-02-26",
+    updated: "2026-02-27",
   },
   categories: [
     {
