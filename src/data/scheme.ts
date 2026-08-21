@@ -45,6 +45,14 @@ export const DEFAULT_SCHEME: Scheme = {
           { diagram: "netclass", tags: ["routing", "drc"] }
         ),
         ex(
+          "ex-teardrop",
+          "Teardrops where traces meet pads",
+          "Every trace flares out into a smooth teardrop before it reaches its pad — no skinny trace walking straight into a big pad.",
+          "A thin trace meeting a large pad concentrates stress at the junction — that's where copper lifts when you rework a joint or the board flexes. The flare spreads the load over more copper so the connection stays put.",
+          "pass",
+          { diagram: "teardrop", tags: ["routing", "pads"] }
+        ),
+        ex(
           "ex-90",
           "90° corners on traces",
           "One or more traces turn a hard right angle.",
