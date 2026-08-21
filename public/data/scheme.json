@@ -2,10 +2,10 @@
   "meta": {
     "team": "HKUST Robotics Team",
     "doc": "STD-PCB-01",
-    "rev": "F3",
-    "updated": "2026-02-28",
+    "rev": "F4",
+    "updated": "2026-03-01",
     "maintainer": "the Hardware Division",
-    "initiatedBy": "the first hardware batch"
+    "lastUpdatedBy": "the Hardware Division"
   },
   "categories": [
     {
@@ -174,6 +174,24 @@
           "reason": "A pF cap only filters the very fastest noise; the bulk cap is the energy bucket the load drinks from. With a pF in its place the output sags and the regulator can ring under load. Read µF / nF / pF twice on every part before ordering.",
           "tags": ["passives", "regulator"],
           "diagram": "wrongcap"
+        },
+        {
+          "id": "ex-reversepol",
+          "title": "Reverse-polarity protection on the power entry",
+          "verdict": "pass",
+          "description": "Every battery / supply input has a series diode or P-MOSFET so a reversed plug or battery does no damage.",
+          "reason": "Reversed power is the fastest way to kill a board, and it will happen — connectors are small and pits are dark. A single cheap part turns a dead board into a “flip the plug” moment.",
+          "tags": ["power", "protection"],
+          "diagram": "reversepol"
+        },
+        {
+          "id": "ex-polyfuse",
+          "title": "A fuse on the battery feed",
+          "verdict": "pass",
+          "description": "A polyfuse or proper fuse sits in series with the main battery input, sized just above the board's normal draw.",
+          "reason": "Wiring mistakes, a jammed motor, a shorted tool on the bench — all of them pull huge current. The fuse gives up before the trace or the battery connector does, and a polyfuse resets itself after the fault is removed.",
+          "tags": ["power", "protection"],
+          "diagram": "polyfuse"
         }
       ]
     },
@@ -280,6 +298,24 @@
           "reason": "Crosstalk — one net whispering into its neighbour — falls off steeply with spacing. At ~3W the coupling is small enough to ignore for our buses. Closer than that and edges start smearing into each other.",
           "tags": ["routing", "crosstalk"],
           "diagram": "threew"
+        },
+        {
+          "id": "ex-esd",
+          "title": "ESD diodes on external connectors",
+          "verdict": "pass",
+          "description": "Every pin that leaves the board carries a low-capacitance ESD diode to the rails, placed right at the connector.",
+          "reason": "A spark you can't even feel is thousands of volts, and connector pins are the only place it gets an invitation straight inside. One diode array per connector is the cheapest insurance on the bill of materials.",
+          "tags": ["connectors", "protection"],
+          "diagram": "esd"
+        },
+        {
+          "id": "ex-seriesres",
+          "title": "Series resistors on external signal lines",
+          "verdict": "pass",
+          "description": "Signals that leave the board (UART, enable lines, sensor feeds) go through a small series resistor — 33–100 Ω — placed at the connector side.",
+          "reason": "It slows any ESD strike or ground-spike enough for the clamp diodes to absorb it, and it damps ringing on long wires. The signal never notices; the MCU survives the pit.",
+          "tags": ["connectors", "protection"],
+          "diagram": "seriesres"
         }
       ]
     },
@@ -324,6 +360,15 @@
           "reason": "Every mistake caught in the schematic is free; the same mistake caught after fab costs a new board. The ERC is the cheapest review you'll ever run.",
           "tags": ["erc", "review"],
           "diagram": "erc"
+        },
+        {
+          "id": "ex-unusedpins",
+          "title": "No floating inputs, no dangling pins",
+          "verdict": "pass",
+          "description": "Open-drain lines get pull-ups, unused MCU inputs are tied to a defined level (or configured in firmware), and nothing is left drawn as “NC” without a reason.",
+          "reason": "A floating input is a coin flip that re-flips with temperature and noise — random resets and phantom wakeups. Defining every pin's state on the schematic makes the board behave the same on day one and day three hundred.",
+          "tags": ["schematic", "pins"],
+          "diagram": "unusedpins"
         }
       ]
     },
@@ -395,6 +440,15 @@
           "reason": "When every stripe points the same way, a backwards part screams at you during hand assembly, and pick-and-place inspection gets trivial. It costs nothing to plan and saves real debugging time.",
           "tags": ["placement", "assembly"],
           "diagram": "orient"
+        },
+        {
+          "id": "ex-stdparts",
+          "title": "Standard packages from the approved list",
+          "verdict": "pass",
+          "description": "Passives use 0402 or 0603, ICs come in packages the assembler stocks — no obscure footprints picked from a single-source datasheet.",
+          "reason": "An exotic package means longer lead times, higher cost and a real chance the pick-and-place line rejects the whole job. The approved parts list exists so nobody has to think about it twice.",
+          "tags": ["library", "dfm"],
+          "diagram": "stdparts"
         }
       ]
     },
@@ -492,6 +546,15 @@
           "reason": "Sharp outside corners snap during fabrication, handling and assembly. Rails let the assembler run a whole panel through pick-and-place and reflow, then snap individual boards out. Small courtesy, big time saved on every order.",
           "tags": ["dfm", "fab"],
           "diagram": "panel"
+        },
+        {
+          "id": "ex-rfkeepout",
+          "title": "Copper-free zone around the antenna",
+          "verdict": "pass",
+          "description": "The radio module's antenna has a keep-out — no copper, traces or ground pour underneath or beside it — exactly as the module datasheet draws it.",
+          "reason": "An antenna works by coupling to free space; copper under it couples to the board instead, detuning it and eating your range. The module datasheet shows the exact keep-out shape. Copy it, don't guess it.",
+          "tags": ["rf", "keepout"],
+          "diagram": "rfkeepout"
         }
       ]
     },
@@ -527,6 +590,15 @@
           "reason": "Without the drill data nobody can make holes — or worse, the fab guesses. Re-export the whole set from one CAD session and verify every layer, every time.",
           "tags": ["outputs", "fab"],
           "diagram": "drill"
+        },
+        {
+          "id": "ex-mechlayer",
+          "title": "Board outline on its own mechanical layer",
+          "verdict": "pass",
+          "description": "The board edge, slots and cutouts live on a dedicated mechanical/edge layer — never drawn into a copper or silk layer.",
+          "reason": "Fabs read the outline from a specific layer. When the edge is buried in copper art, the CAM operator has to guess where the board actually ends — and a wrong guess cuts your connectors in half. One layer, one purpose.",
+          "tags": ["outputs", "fab"],
+          "diagram": "mechlayer"
         }
       ]
     }
@@ -551,7 +623,11 @@
     "Gerber set + drill file verified layer-by-layer in a viewer",
     "High-current paths ride polygons + via arrays, never thin traces",
     "No signal crosses a plane split; parallel fast nets spaced ≥ 3W",
-    "Polarised parts face one way; board name + rev + date on the silk"
+    "Polarised parts face one way; board name + rev + date on the silk",
+    "Power entry protected: reverse-polarity part + fuse on the battery feed",
+    "External connectors have ESD diodes + series resistors",
+    "RF antenna keep-out copied from the module datasheet",
+    "Board outline on its own mechanical layer"
   ],
   "readings": [
     {

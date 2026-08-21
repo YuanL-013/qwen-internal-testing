@@ -236,20 +236,21 @@ At the top of the file:
 "meta": {
   "team": "HKUST Robotics Team",
   "doc": "STD-PCB-01",
-  "rev": "F3",
-  "updated": "2026-02-28",
+  "rev": "F4",
+  "updated": "2026-03-01",
   "maintainer": "the Hardware Division",
-  "initiatedBy": "the first hardware batch"
+  "lastUpdatedBy": "the Hardware Division"
 }
 ```
 
-- **`rev`** — bump it each time you publish a change (`F3` → `G` → `H`…). Letters, or letter +
+- **`rev`** — bump it each time you publish a change (`F4` → `G` → `H`…). Letters, or letter +
   number for small fixes. The site only trusts a data file whose revision is *the same as or newer
   than* the one it was built with, so an old copy can never clobber new content.
 - **`updated`** — set to today's date in `YYYY-MM-DD` form.
 - **`maintainer`** — shown in the footer as "MAINTAINED BY …", so trainees know who to ask.
-- **`initiatedBy`** — shown as a large, subtle watermark at the very bottom of the page to credit
-  whoever started the project. Leave it out to hide the credit line entirely.
+- **`lastUpdatedBy`** — the small "LAST UPDATED BY …" line at the very bottom. On GitHub Pages the
+  site reads the *actual* last git commit to `data/scheme.json`, so this updates itself whenever
+  someone pushes; the field is only the fallback when git history can't be read (e.g. local builds).
 
 ---
 
