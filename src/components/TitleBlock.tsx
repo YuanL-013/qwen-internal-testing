@@ -16,7 +16,10 @@ export default function TitleBlock({
   source: keyof typeof DATA_STATE;
 }) {
   const ds = DATA_STATE[source];
-  const all = scheme.categories.flatMap((c) => c.examples.map((e) => ({ title: e.title, verdict: e.verdict })));
+  const all = scheme.categories
+    .filter((c) => !c.hidden)
+    .flatMap((c) => c.examples.filter((e) => !e.hidden).map((e) => ({ title: e.title, verdict: e.verdict })));
+  const topics = scheme.categories.filter((c) => !c.hidden).length;
   const passes = all.filter((e) => e.verdict === "pass").length;
   const fails = all.length - passes;
 
@@ -76,7 +79,7 @@ export default function TitleBlock({
                   <span className="text-fail">{fails}</span> NEVER THIS
                 </span>
                 <span className="border border-edge bg-panel px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-ink">
-                  <span className="text-copperlt">{scheme.categories.length}</span> TOPICS
+                  <span className="text-copperlt">{topics}</span> TOPICS
                 </span>
                 <a
                   href="#standard"

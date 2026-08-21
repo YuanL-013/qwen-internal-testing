@@ -1,131 +1,256 @@
-# PCB Design Guide — Northbolt Robotics
+# PCB Design Review Guide — HKUST Robotics Team
 
-A static webpage that shows the team's PCB design standard: what's okay, what's
-not okay, and why. Trainees read it, and anyone with repo access can grow it.
+A public, always-current guide of what our PCB layouts should (and shouldn't) look like.
+Trainees read it to learn the standard. Reviewers maintain it by editing **one JSON file**.
 
-**Live content:** `public/data/scheme.json` — that one file is the whole guide.
-
----
-
-## How it works
-
-1. The site is a plain static build (React + Vite), hosted on GitHub Pages.
-2. On load, the page fetches `data/scheme.json` and renders whatever is in it —
-   categories, findings, checklist.
-3. If the file is missing, or its `rev` is **older** than the one compiled into
-   the build, the built-in copy (`src/data/scheme.ts`) is shown instead. A stale
-   file can never hide newer content. The small DATA lamp in the title block
-   tells you which copy you're looking at.
-4. Reviewers don't need any admin login. Access control **is** the repo:
-   collaborator access = can edit the guide. Everyone else gets a read-only page.
-
-```
-repo
-├── public/
-│   ├── data/scheme.json    ← THE guide. Edit this.
-│   └── examples/           ← real board photos, referenced from the JSON
-├── src/
-│   ├── data/scheme.ts      ← compiled fallback copy (keep in sync)
-│   └── components/
-│       └── Diagrams.tsx    ← the built-in drawing library
-└── dist/                   ← built site (what Pages serves)
-```
+> **You do not need to know how to code to maintain this guide.** Everything a reviewer ever
+> changes lives in a single text file. If you can copy-paste and edit text, you can do this.
 
 ---
 
-## How to expand the guide
+## How it works (the 30-second version)
 
-Everything below is a commit to `public/data/scheme.json`
-(and the matching `src/data/scheme.ts`), then push — Pages rebuilds.
+```
+public/data/scheme.json   ←  THE ONLY FILE REVIEWERS EDIT
+        │
+        ▼
+   the website reads it and renders every card, tab and checklist item
+```
 
-### Add a finding (a "card")
+- The website is **static** (it runs on GitHub Pages — no server, no database).
+- All the content — every category, every "okay / not okay" card, every checklist line — comes
+  from **`public/data/scheme.json`**.
+- When you edit that file and push to `main`, GitHub Pages rebuilds and the site updates.
+- The code only controls *how* things look, not *what* is shown. Reviewers never need to touch it.
 
-Inside the right category's `examples` array:
+---
+
+## Before you start: two rules
+
+1. **This guide shows standards, never scores.** No points, no bands, no deductions anywhere.
+   Those live in the internal marking sheet and must not be committed here.
+2. **Bump the revision when you change content** (see [Revision & date](#changing-the-team-name-revision--date)).
+   The site ignores data files with an *older* revision than the build, so an outdated file can
+   never accidentally overwrite newer content.
+
+---
+
+## Adding a new design convention (the main task)
+
+Every convention is one **example** object inside a **category**. Here's the recipe.
+
+### Step 1 — Open `public/data/scheme.json`
+
+Find the category your convention belongs to (`"code": "PWR"` for power, `"code": "BUS"` for
+CAN/clock, etc.). Inside it there's an `"examples": [ ... ]` list.
+
+### Step 2 — Copy-paste this template into the list
 
 ```json
 {
-  "id": "ex-my-finding",
-  "title": "What the reader sees",
-  "description": "The pattern, in one or two plain sentences.",
-  "reason": "Why it's okay — or why it fails. This is the part people actually learn from.",
+  "id": "ex-my-new-rule",
+  "title": "Short, human name for the rule",
   "verdict": "pass",
-  "tags": ["routing"],
-  "diagram": "corners"
-}
+  "description": "What you actually see on the board. One or two plain sentences.",
+  "reason": "Why this is okay (or not okay). This is the part that settles arguments.",
+  "tags": ["power", "regulator"],
+  "diagram": "railzone"
+},
 ```
 
-- `verdict` — `"pass"` (green card, "DO THIS") or `"fail"` (red card, "NEVER THIS").
-- `reason` — optional but strongly encouraged; it renders as an expandable
-  "WHY THIS WORKS / WHY THIS FAILS" line.
-- `tags` — searchable, lowercase.
-- Visual: use **one** of:
-  - `"diagram": "<key>"` — a built-in drawing (see list below), or
-  - `"image": "examples/my-photo.jpg"` — a real photo from `public/examples/`
-    (cards with photos get a REAL PHOTO badge). `image` wins if both are set.
-  - neither — the card shows a neutral chip placeholder. Still fine.
+### Step 3 — Fill in the fields
 
-### Add a category
+| Field | What to put | Notes |
+|---|---|---|
+| `id` | A unique slug, e.g. `"ex-bulk-cap-close"` | Must not repeat anywhere in the file. |
+| `title` | The card heading. | Keep it short and human. |
+| `verdict` | `"pass"` (okay / do this) **or** `"fail"` (not okay / never this) | This sets the green/red styling. |
+| `description` | What the reviewer/trainee is looking at. | Plain words, no jargon if possible. |
+| `reason` | The *why*. | This is hidden behind a "Why this works/fails" tap on the card. |
+| `tags` | A few lowercase keywords. | Powers the search box. |
+| `diagram` **or** `image` | The visual — see below. | Use **one** of these, not both. |
+
+> **Punctuation tip:** each example object ends with a comma `,` *except* the very last one in a
+> list. If the site goes blank after your edit, you almost certainly added or dropped a comma.
+
+### Step 4 — Pick a visual
+
+You have two choices:
+
+**Option A — a built-in diagram** (easiest). Set `"diagram"` to one of the keys below. These are
+hand-drawn SVG illustrations that always look consistent.
+
+```
+corners  corner90  netclass  neckdown  stub
+relief  stitch  decap  decapbunch  thermalvias  railzone  thinrail  wrongcap
+canpair  cansplit  xtal  xtalring  viakeepout
+schflow  netnaming  decal  erc
+footprint  pin1  xh  sketchfp  mirror  headergap
+refdes  silkhdr  silkpad  nopolarity
+drc  sliver  creepage
+gerbers  drill  datasheet
+teardrop  antipad  caporient  courtyard  mount  testpts  fiducials  starpoint
+```
+
+**Option B — a real photo** (great for "we actually saw this on a board").
+See [Adding real photos](#adding-real-photos). If you set `"image"`, delete the `"diagram"` line.
+
+---
+
+## Showing and hiding cards (reviewer control)
+
+Sometimes a convention is correct in general but **not used by our team right now**. Rather than
+delete it, hide it — it stays in the file for reference but doesn't appear on the site.
+
+Add `"hidden": true` to any example:
 
 ```json
 {
-  "id": "cat-mech",
-  "code": "MEC",
-  "name": "Mechanical & Connectors",
-  "blurb": "One sentence on what this section cares about.",
-  "examples": [ ... ]
+  "id": "ex-24v-rail",
+  "title": "24 V vs 12 V main rail",
+  "verdict": "pass",
+  "description": "...",
+  "reason": "...",
+  "tags": ["power"],
+  "diagram": "railzone",
+  "hidden": true
+},
+```
+
+- `"hidden": true` → card is **not shown** on the site.
+- No `hidden` line (or `"hidden": false`) → card **is shown**.
+
+You can also hide a **whole category** by adding `"hidden": true` to the category object (next to
+its `"code"` / `"name"`). Hidden cards still count for nothing — header totals, tabs and the
+ticker all skip them automatically.
+
+> This is the mechanism for "some design conventions are not used in our case": keep them in the
+> repo, flip `hidden` to `true`, and flip it back when the team adopts them.
+
+---
+
+## Adding real photos
+
+1. Put your image file in the **`public/examples/`** folder (there's a README there too).
+   Name it something memorable: `bad-acid-trap.jpg`, `good-decoupling.png`.
+2. In your example, reference it with an `"image"` field (path is relative to the site root):
+
+```json
+"image": "examples/bad-acid-trap.jpg"
+```
+
+3. Remove the `"diagram"` line for that example (a card uses a photo *or* a diagram).
+
+Guidelines:
+- Keep each file **under ~1.5 MB** (compress first — every byte ships to every trainee).
+- JPG for photos, PNG only for crisp line-art screenshots.
+- Crop to the interesting region; one image per card is enough.
+- Cards with a photo automatically show a small **REAL PHOTO** badge so trainees know it's a
+  board we actually saw.
+
+---
+
+## Editing the checklist
+
+The pre-submission checklist is just a list of strings at the bottom of the file:
+
+```json
+"checklist": [
+  "DRC passes with zero errors at 0.2 mm / 0.2 mm",
+  "One 100 nF decoupling cap per MCU power pin",
+  "Add your new line here"
+]
+```
+
+Add, remove or reorder lines freely. Trainees can tick these off in their browser (ticks are saved
+locally on their machine only).
+
+---
+
+## Adding a whole new category
+
+If your conventions don't fit an existing topic, add a new category object to the
+`"categories": [ ... ]` list:
+
+```json
+{
+  "id": "cat-emc",
+  "code": "EMC",
+  "name": "EMC & Shielding",
+  "blurb": "One sentence on why this topic matters.",
+  "examples": [
+    { "id": "ex-...", "title": "...", "verdict": "pass", "description": "...", "reason": "...", "tags": [], "diagram": "stitch" }
+  ]
 }
 ```
 
-`code` is the 2–4 letter tab label. Order in the array = order on the page.
-
-### Edit the checklist
-
-`"checklist": [ "…", "…" ]` — plain strings, in the order you want them.
-Trainees can tick these locally on their own browser; nothing is sent anywhere.
-
-### Add real photos
-
-1. Commit the image to `public/examples/` (see that folder's README).
-2. Point a finding's `"image"` at it: `"image": "examples/bad-corner.jpg"`.
-
-Keep files under ~1.5 MB — squash them first; every byte ships to every reader.
-
-### Add a new built-in diagram
-
-Diagrams are small inline SVG components in `src/components/Diagrams.tsx`.
-Add a component, register it in the `DIAGRAMS` map (and `DIAGRAM_OPTIONS` for
-the list), and reference its key from `"diagram"`. This is the only change that
-touches code rather than data.
+- `code` is the short tab label (2–4 letters).
+- A new tab appears automatically; no code changes needed.
 
 ---
 
-## Built-in diagram keys
+## Changing the team name, revision & date
 
-`corners` `corner90` `netclass` `neckdown` `relief` `stitch` `viapad` `flood`
-`footprint` `pin1` `sketchfp` `mirror` `refdes` `silkpad` `nopolarity` `drc`
-`sliver` `creepage` `gerbers` `drill` `decap` `decapbunch` `thermalvias`
-`railzone` `thinrail` `wrongcap` `canpair` `cansplit` `xtal` `xtalring`
-`viakeepout` `xh` `headergap` `silkhdr` `caporient` `antipad` `mount` `testpts`
-`teardrop` `courtyard` `fiducials` `starpoint`
+At the top of the file:
 
-Unknown keys fall back to the neutral placeholder — a typo won't break the page.
+```json
+"meta": {
+  "team": "HKUST Robotics Team",
+  "doc": "STD-PCB-01",
+  "rev": "F",
+  "updated": "2026-02-26"
+}
+```
+
+- **`rev`** — bump the letter each time you publish a change (`F` → `G` → `H`). The site only
+  trusts a data file whose revision is *newer* than the one it was built with, so this prevents an
+  old copy from clobbering new content.
+- **`updated`** — set to today's date in `YYYY-MM-DD` form.
 
 ---
 
-## Deploying (GitHub Pages)
+## Deploying to GitHub Pages
 
-1. `npm run build` → `dist/`.
-2. Serve `dist/` (Pages branch, an action, whatever the repo already uses).
-3. **Project pages** (`username.github.io/repo-name`): build with `base: "./"`
-   in `vite.config` so asset and data paths stay relative.
-4. After changing the guide, bump `meta.rev` (A → B → C…) and `meta.updated`.
-   The app only trusts a data file whose rev is newer than its compiled copy —
-   that's also how you force an update through stale caches.
+1. Commit your change to `public/data/scheme.json` and push to `main`.
+2. GitHub Pages rebuilds automatically; the new card is live in a minute or two.
+3. If you're hosting under a **project subpath** (`username.github.io/repo-name`), make sure the
+   build uses a relative base (`base: "./"` in `vite.config.ts`) so `data/scheme.json` resolves.
+   For a custom domain or user page, the defaults already work.
 
-## Rules of the house
+---
 
-- **No scores in this repo.** The guide shows standards only. Weighting, bands
-  and point values live in the internal marking sheet and are never committed
-  here — trainees see what's expected, not what things cost.
-- One file of data, one place for photos, one library of drawings. That's the
-  whole architecture — it scales by adding entries, not by adding systems.
+## Running it locally (optional, for the curious)
+
+```bash
+npm install
+npm run dev      # live preview while you edit
+npm run build    # production build into dist/
+```
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause / fix |
+|---|---|
+| Site is blank after my edit | A JSON comma is missing or extra. Paste the file into [jsonlint.com](https://jsonlint.com) to find it. |
+| Title block says **STALE FILE IGNORED** | Your `scheme.json` `rev` is *older* than the build's. Bump `rev` higher. |
+| Title block says **BUILT-IN SNAPSHOT** | `data/scheme.json` couldn't be fetched — check the file exists at `public/data/scheme.json`. |
+| My photo doesn't show | Check the path starts with `examples/...` and the file is under `public/examples/`. |
+
+---
+
+## File map
+
+```
+public/
+  data/scheme.json      ← reviewers edit this (all content)
+  examples/             ← reviewers drop real photos here
+src/
+  data/scheme.ts        ← built-in fallback copy of the content (devs keep in sync)
+  components/Diagrams.tsx ← the built-in SVG illustration library
+  (everything else is presentation — reviewers can ignore it)
+```
+
+**House rules:** standards are public, scoring is not · keep language plain · bump the rev ·
+when in doubt, hide rather than delete.

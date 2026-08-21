@@ -27,10 +27,13 @@ export default function App() {
     let cancelled = false;
     fetchCommittedScheme().then((committed) => {
       if (cancelled) return;
-      if (committed && revRank(committed.meta.rev) > revRank(DEFAULT_SCHEME.meta.rev)) {
+      if (committed && revRank(committed.meta.rev) >= revRank(DEFAULT_SCHEME.meta.rev)) {
+        // Data file is current (or ahead) of this build — use it.
         setScheme(committed);
         setSource("live");
       } else {
+        // Data file is older than the build (or missing) — fall back to the
+        // compiled copy so a stale file can never mask newer content.
         if (committed) setSource("stale");
         setScheme(structuredClone(DEFAULT_SCHEME));
       }
@@ -42,18 +45,20 @@ export default function App() {
 
   /* keep active tab valid */
   useEffect(() => {
-    if (scheme && active !== "all" && !scheme.categories.some((c) => c.id === active)) setActive("all");
+    if (scheme && active !== "all" && !scheme.categories.some((c) => !c.hidden && c.id === active)) setActive("all");
   }, [scheme, active]);
 
   const visible = useMemo(() => {
     if (!scheme) return [];
     const q = query.trim().toLowerCase();
     return scheme.categories
+      .filter((c) => !c.hidden)
       .filter((c) => active === "all" || c.id === active)
       .map((c) => ({
         ...c,
         examples: c.examples.filter(
           (e) =>
+            !e.hidden &&
             (verdict === "all" || e.verdict === verdict) &&
             (!q ||
               [e.title, e.description, e.reason, c.name, c.code, ...e.tags].join(" ").toLowerCase().includes(q))
@@ -88,7 +93,7 @@ export default function App() {
       <GuideLegend />
 
       <CategoryNav
-        categories={scheme.categories}
+        categories={scheme.categories.filter((c) => !c.hidden)}
         active={active}
         onActive={setActive}
         verdict={verdict}
@@ -139,9 +144,12 @@ export default function App() {
           <span className="font-mono text-[10.5px] tracking-[0.18em] text-faint">
             {scheme.meta.doc} · REV {scheme.meta.rev} · UPDATED {scheme.meta.updated.toUpperCase()}
           </span>
-          <a href="#maintainers" className="font-mono text-[10.5px] tracking-[0.18em] text-copper/80 transition-colors hover:text-copperlt">
-            FOR REVIEWERS →
-          </a>
+          <span
+            className="cursor-help font-mono text-[10.5px] tracking-[0.18em] text-copper/80"
+            title="Reviewers: the guide is maintained by editing public/data/scheme.json in the repo — see the README for a full walkthrough, including how to show/hide cards."
+          >
+            REVIEWERS · EDIT <span className="text-copperlt">data/scheme.json</span>
+          </span>
           <Reveal className="ml-auto">
             <span className="font-mono text-[10px] tracking-[0.18em] text-faint">
               WHAT WE EXPECT, <span className="text-copper/70">WRITTEN DOWN.</span>

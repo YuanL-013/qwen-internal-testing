@@ -56,14 +56,11 @@ export default function GuideLegend() {
                   ))}
                 </div>
               </div>
-              {/* annotation tags */}
-              <span className="absolute -right-3 top-6 rotate-90 border border-copper/50 bg-bg px-1.5 py-0.5 font-mono text-[8.5px] tracking-[0.2em] text-copperlt">
-                VERDICT
-              </span>
-              <span className="absolute -left-3 bottom-24 -rotate-90 border border-copper/50 bg-bg px-1.5 py-0.5 font-mono text-[8.5px] tracking-[0.2em] text-copperlt">
-                THE WHY
-              </span>
             </div>
+            <p className="mt-3 flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-faint">
+              <span className="inline-block h-2 w-2 rotate-45 bg-copper" />
+              BORDER = VERDICT · CORNER LABEL = VERDICT · “WHY” ROW = TAP TO OPEN
+            </p>
           </Reveal>
         </div>
 
