@@ -18,8 +18,8 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
-    rev: "F",
-    updated: "2026-02-26",
+    rev: "F1",
+    updated: "2026-02-27",
   },
   categories: [
     {
@@ -43,6 +43,14 @@ export const DEFAULT_SCHEME: Scheme = {
           "Rules in the checker beat rules in your head. Widths stay consistent across the whole board, and anyone can verify the setup in one place.",
           "pass",
           { diagram: "netclass", tags: ["routing", "drc"] }
+        ),
+        ex(
+          "ex-teardrop",
+          "Teardrops where traces meet pads",
+          "Every trace flares out into a smooth teardrop before it reaches its pad — no skinny trace walking straight into a big pad.",
+          "A thin trace meeting a large pad concentrates stress at the junction — that's where copper lifts when you rework a joint or the board flexes. The flare spreads the load over more copper so the connection stays put.",
+          "pass",
+          { diagram: "teardrop", tags: ["routing", "pads"] }
         ),
         ex(
           "ex-90",

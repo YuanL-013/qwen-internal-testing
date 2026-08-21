@@ -129,24 +129,37 @@ ticker all skip them automatically.
 
 ---
 
-## Adding real photos
+## Adding real photos (replaces the diagram on a card)
 
-1. Put your image file in the **`public/examples/`** folder (there's a README there too).
-   Name it something memorable: `bad-acid-trap.jpg`, `good-decoupling.png`.
-2. In your example, reference it with an `"image"` field (path is relative to the site root):
+A photo set on a card **completely replaces** its built-in diagram — the card then shows your
+photo and a small **REAL PHOTO** badge. You can upload straight from your browser; no git needed.
+
+**Step 1 — upload the photo to `public/examples/`**
+
+1. On GitHub, open the repo → click into the **`public`** folder → click **`examples`**.
+2. Click **Add file → Upload files**, drag your photo in, name it something memorable
+   (`bad-acid-trap.jpg`, `good-decoupling.png`), then **Commit changes**.
+
+**Step 2 — point the card at it**
+
+In `public/data/scheme.json`, find your example and add (or swap in) the `image` line — the path
+is always `examples/` + the exact filename:
 
 ```json
 "image": "examples/bad-acid-trap.jpg"
 ```
 
-3. Remove the `"diagram"` line for that example (a card uses a photo *or* a diagram).
+If the example had a `"diagram": "..."` line, **delete that line** (a card uses a photo *or* a
+diagram). Commit and push — the photo is live when Pages rebuilds.
+
+> **Safety net:** if the `image` path is wrong or the file is missing, the card automatically
+> falls back to its built-in diagram instead of showing a broken picture. Nothing can "break"
+> a card by pointing at the wrong file — it just shows the drawing until the photo lands.
 
 Guidelines:
 - Keep each file **under ~1.5 MB** (compress first — every byte ships to every trainee).
 - JPG for photos, PNG only for crisp line-art screenshots.
 - Crop to the interesting region; one image per card is enough.
-- Cards with a photo automatically show a small **REAL PHOTO** badge so trainees know it's a
-  board we actually saw.
 
 ---
 
@@ -197,25 +210,34 @@ At the top of the file:
 "meta": {
   "team": "HKUST Robotics Team",
   "doc": "STD-PCB-01",
-  "rev": "F",
-  "updated": "2026-02-26"
+  "rev": "F1",
+  "updated": "2026-02-27"
 }
 ```
 
-- **`rev`** — bump the letter each time you publish a change (`F` → `G` → `H`). The site only
-  trusts a data file whose revision is *newer* than the one it was built with, so this prevents an
-  old copy from clobbering new content.
+- **`rev`** — bump it each time you publish a change (`F1` → `G` → `H`…). Letters, or letter +
+  number for small fixes. The site only trusts a data file whose revision is *the same as or newer
+  than* the one it was built with, so an old copy can never clobber new content.
 - **`updated`** — set to today's date in `YYYY-MM-DD` form.
 
 ---
 
-## Deploying to GitHub Pages
+## Deploying to GitHub Pages (automatic)
 
-1. Commit your change to `public/data/scheme.json` and push to `main`.
-2. GitHub Pages rebuilds automatically; the new card is live in a minute or two.
-3. If you're hosting under a **project subpath** (`username.github.io/repo-name`), make sure the
-   build uses a relative base (`base: "./"` in `vite.config.ts`) so `data/scheme.json` resolves.
-   For a custom domain or user page, the defaults already work.
+The repo ships with a workflow — **`.github/workflows/pages.yml`** — that builds the site with the
+correct settings and publishes it to Pages on every push to `main`. You never run a build command.
+
+**One-time setup (3 clicks):**
+
+1. Repo → **Settings** → **Pages** (left sidebar).
+2. Under *Build and deployment* → **Source**, choose **GitHub Actions**.
+3. Done. From now on: edit → commit to `main` → the site republishes itself in ~1 minute.
+
+> **Why the site may have shown a blank page before:** GitHub Pages serves project repos from a
+> *subpath* (`username.github.io/repo-name/`). A default Vite build writes asset links starting
+> with `/`, which point to the wrong place on a subpath — so the page loads nothing. The workflow
+> builds with `--base=./` (relative links), which works on any subpath, custom domain or user page.
+> If you build manually for some reason, always use `npx vite build --base=./`.
 
 ---
 
@@ -233,16 +255,20 @@ npm run build    # production build into dist/
 
 | Symptom | Likely cause / fix |
 |---|---|
+| **GitHub Pages is completely blank** | The build used absolute asset paths on a project subpath. Use the bundled workflow (Pages → Source → *GitHub Actions*) or build with `npx vite build --base=./`. Also check Pages settings: it must be set to deploy from *Actions*, not from a branch. |
 | Site is blank after my edit | A JSON comma is missing or extra. Paste the file into [jsonlint.com](https://jsonlint.com) to find it. |
+| My edit never appears online | Make sure it's committed to **`main`** (not an unmerged branch), then watch the **Actions** tab — the *Deploy guide* run must finish green. Hard-refresh the page once (Ctrl/Cmd + Shift + R). |
 | Title block says **STALE FILE IGNORED** | Your `scheme.json` `rev` is *older* than the build's. Bump `rev` higher. |
 | Title block says **BUILT-IN SNAPSHOT** | `data/scheme.json` couldn't be fetched — check the file exists at `public/data/scheme.json`. |
-| My photo doesn't show | Check the path starts with `examples/...` and the file is under `public/examples/`. |
+| My photo doesn't show | Check the path starts with `examples/...` and the file is committed under `public/examples/` with the exact same spelling. Until it's right, the card safely shows its built-in diagram instead. |
 
 ---
 
 ## File map
 
 ```
+.github/workflows/
+  pages.yml             ← builds & deploys to Pages on every push to main
 public/
   data/scheme.json      ← reviewers edit this (all content)
   examples/             ← reviewers drop real photos here

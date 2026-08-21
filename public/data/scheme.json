@@ -2,8 +2,8 @@
   "meta": {
     "team": "HKUST Robotics Team",
     "doc": "STD-PCB-01",
-    "rev": "F",
-    "updated": "2026-02-26"
+    "rev": "F1",
+    "updated": "2026-02-27"
   },
   "categories": [
     {
@@ -29,6 +29,15 @@
           "reason": "Rules in the checker beat rules in your head. Widths stay consistent across the whole board, and anyone can verify the setup in one place.",
           "tags": ["routing", "drc"],
           "diagram": "netclass"
+        },
+        {
+          "id": "ex-teardrop",
+          "title": "Teardrops where traces meet pads",
+          "verdict": "pass",
+          "description": "Every trace flares out into a smooth teardrop before it reaches its pad — no skinny trace walking straight into a big pad.",
+          "reason": "A thin trace meeting a large pad concentrates stress at the junction — that's where copper lifts when you rework a joint or the board flexes. The flare spreads the load over more copper so the connection stays put.",
+          "tags": ["routing", "pads"],
+          "diagram": "teardrop"
         },
         {
           "id": "ex-90",
