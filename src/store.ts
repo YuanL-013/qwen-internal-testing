@@ -3,36 +3,50 @@ import type { Scheme } from "./types";
 
 const KEY_CHECKS = "pcb-guide-checks-v1";
 
-/* ---------------- scheme content ----------------
-   The guide is data. Reviewers with repo collaborator access edit
-   public/data/scheme.json directly on GitHub; Pages redeploys and every
-   visitor reads the same file. The compiled DEFAULT_SCHEME is only a
-   fallback for previews where the JSON is unreachable. */
+/** Recursively strip em dashes out of any text so the site always reads dash-free. */
+export function stripEmDashes<T>(v: T): T {
+  if (typeof v === "string")
+    return v
+      .replace(/\s+—\s+/g, ", ")
+      .replace(/—/g, ", ")
+      .replace(/,\s*,+/g, ",")
+      .replace(/\s{2,}/g, " ") as T;
+  if (Array.isArray(v)) return v.map(stripEmDashes) as T;
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(v as Record<string, unknown>)) out[k] = stripEmDashes((v as Record<string, unknown>)[k]);
+    return out as T;
+  }
+  return v;
+}
 
 function normalizeScheme(raw: unknown): Scheme {
   const base = structuredClone(DEFAULT_SCHEME);
-  if (!raw || typeof raw !== "object") return base;
+  if (!raw || typeof raw !== "object") return stripEmDashes(base);
   const r = raw as Partial<Scheme>;
-  return {
+  return stripEmDashes({
     meta: { ...base.meta, ...(r.meta ?? {}) },
+    spec: Array.isArray(r.spec) && r.spec.length ? (r.spec as Scheme["spec"]) : base.spec,
     categories: Array.isArray(r.categories)
       ? (r.categories as Scheme["categories"]).map((c) => ({
           ...c,
+          hidden: c.hidden === true,
           examples: Array.isArray(c.examples)
             ? c.examples.map((e) => ({
                 ...e,
                 tags: Array.isArray(e.tags) ? e.tags : [],
                 verdict: e.verdict === "pass" ? ("pass" as const) : ("fail" as const),
+                hidden: e.hidden === true,
               }))
             : [],
         }))
       : base.categories,
     checklist: Array.isArray(r.checklist) && r.checklist.length ? (r.checklist as string[]) : base.checklist,
     readings: Array.isArray(r.readings) && r.readings.length ? (r.readings as Scheme["readings"]) : base.readings,
-  };
+  });
 }
 
-/** Rank a document revision so builds can ignore stale data files ("A" < "B" < …; "C2" supported). */
+/** Rank a document revision so builds can ignore stale data files. */
 export function revRank(rev: string): number {
   const v = (rev ?? "").trim().toUpperCase();
   const m = /^([A-Z])(\d*)$/.exec(v);
@@ -42,19 +56,13 @@ export function revRank(rev: string): number {
 
 export async function fetchCommittedScheme(): Promise<Scheme | null> {
   try {
-    // Unique query per load defeats any intermediate/preview cache of the JSON
-    // (GitHub Pages ignores the query for static files, so it is safe there too).
-    const res = await fetch(`${import.meta.env.BASE_URL}data/scheme.json?v=${Date.now()}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(`${import.meta.env.BASE_URL}data/scheme.json?v=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) return null;
     return normalizeScheme(await res.json());
   } catch {
     return null;
   }
 }
-
-/* ---------------- trainee checklist (local only) ---------------- */
 
 export function loadChecks(): Record<string, boolean> {
   try {

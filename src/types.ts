@@ -4,19 +4,11 @@ export interface Example {
   id: string;
   title: string;
   verdict: Verdict;
-  /** What the reviewer (and trainee) is looking at. */
   description: string;
-  /** Why this pattern is okay / not okay — the part that settles arguments. */
   reason: string;
   tags: string[];
-  /** Key of a built-in SVG illustration. */
   diagram?: string;
-  /** Path to a photo/shot committed to the repo (e.g. "examples/pad.jpg") or a URL. */
-  image?: string;
-  /** Set true to keep the finding in the file without showing it on the site. */
   hidden?: boolean;
-  /** Omit (or "basics") for day-one rules; "advanced" shows a small PRO badge. */
-  level?: "basics" | "advanced";
 }
 
 export interface Category {
@@ -25,7 +17,6 @@ export interface Category {
   name: string;
   blurb: string;
   examples: Example[];
-  /** Set true to hide a whole category (tab + section) from the site. */
   hidden?: boolean;
 }
 
@@ -33,7 +24,7 @@ export interface ReadingLink {
   title: string;
   url: string;
   note?: string;
-  tag?: string; // DOCS · TOOLS · VIDEO · REFERENCE
+  tag?: string;
 }
 
 export interface ReadingGroup {
@@ -41,17 +32,24 @@ export interface ReadingGroup {
   links: ReadingLink[];
 }
 
+export interface SpecGroup {
+  id: string;
+  num: number;
+  title: string;
+  items: string[];
+}
+
 export interface SchemeMeta {
   team: string;
   doc: string;
   rev: string;
-  updated: string; // ISO yyyy-mm-dd
-  maintainer?: string; // shown in the footer
-  lastUpdatedBy?: string; // fallback for the credit line when git history is unreadable
+  updated: string;
+  maintainer?: string;
 }
 
 export interface Scheme {
   meta: SchemeMeta;
+  spec?: SpecGroup[];
   categories: Category[];
   checklist: string[];
   readings?: ReadingGroup[];

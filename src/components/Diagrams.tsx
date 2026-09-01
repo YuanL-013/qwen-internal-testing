@@ -1,7 +1,11 @@
-import { createContext, useId, useContext, type ReactElement, type ReactNode } from "react";
+import { createContext, useContext, type ReactElement, type ReactNode } from "react";
 
-/* Stylised "layout excerpt" illustrations drawn as inline SVG —
-   precise enough to teach from, consistent with the doc's visual language. */
+/* Stylised "layout excerpt" illustrations drawn as inline SVG.
+   Layout contract that keeps labels clear of the art:
+   - viewBox is 220 x 132
+   - labels live in the top band (y <= 24) or bottom band (y >= 110)
+   - artwork occupies the middle (y 26..108)
+   - at most one bottom label row, spaced with explicit anchors       */
 
 const CU = "#e0955a";
 const GOLD = "#f0cd8d";
@@ -11,108 +15,58 @@ const GOOD = "#55d78e";
 const DIM = "#9cb8a7";
 const MONO = "var(--font-mono)";
 
-/* NOT-OKAY diagrams are wrapped in <RedTone> so their substrate reads red. */
-const ToneCtx = createContext(false);
+interface Tone {
+  board: string;
+  grid: string;
+  frame: string;
+  caption: string;
+}
+
+const ToneCtx = createContext<Tone>({
+  board: "#08201715".slice(0, 7),
+  grid: "#103024",
+  frame: "#16382a",
+  caption: "#5d7a68",
+});
+
 export function RedTone({ children }: { children: ReactNode }) {
-  return <ToneCtx.Provider value>{children}</ToneCtx.Provider>;
+  return (
+    <ToneCtx.Provider value={{ board: "#1d0f0b", grid: "#33201a", frame: "#3f201a", caption: "#9c7263" }}>
+      {children}
+    </ToneCtx.Provider>
+  );
+}
+
+function clean(s: string) {
+  return s.replace(/\s+—\s+/g, ", ").replace(/—/g, ", ");
 }
 
 function Mini({ children, caption }: { children: ReactNode; caption?: string }) {
-  const red = useContext(ToneCtx);
-  const bg = red ? "#231210" : "#0d281e";
-  const frame = red ? "#4a251f" : "#1c4636";
-  const dot = red ? "#3a1d18" : "#173a2d";
-  const cap = red ? "#c98d84" : "#7fa38d";
-  const marker = red ? "#b06a60" : "#3f7d63";
+  const tone = useContext(ToneCtx);
   const dots: Array<[number, number]> = [];
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) dots.push([18 + c * 23, 16 + r * 25]);
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) dots.push([18 + c * 23, 34 + r * 22]);
   return (
-    <figure className="m-0">
+    <div className="w-full">
       {caption && (
-        <figcaption
-          className="mb-1.5 flex items-center gap-1.5 font-mono text-[8.5px] font-medium tracking-[0.2em]"
-          style={{ color: cap }}
+        <div
+          className="mb-1.5 flex items-center gap-1.5 font-mono text-[8px] tracking-[0.14em]"
+          style={{ color: tone.caption }}
         >
-          <span
-            aria-hidden
-            className="inline-block h-[5px] w-[5px] shrink-0 rotate-45 border"
-            style={{ borderColor: marker }}
-          />
-          {caption}
-        </figcaption>
+          <span className="h-1 w-1 rotate-45 bg-current opacity-70" />
+          {clean(caption)}
+        </div>
       )}
-      <svg viewBox="0 0 220 132" className="block h-auto w-full" role="img">
-        <rect x="1" y="1" width="218" height="130" rx="8" fill={bg} stroke={frame} strokeWidth="1.5" />
-        <g fill={dot}>
+      <svg viewBox="0 0 220 132" className="block h-auto w-full rounded" role="img" aria-label={caption}>
+        <rect x="1" y="1" width="218" height="130" rx="8" fill={tone.board} stroke={tone.frame} strokeWidth="1.5" />
+        <g fill={tone.grid}>
           {dots.map(([x, y], i) => (
-            <circle key={i} cx={x} cy={y} r="1.2" />
+            <circle key={i} cx={x} cy={y} r="1.1" />
           ))}
         </g>
         {children}
       </svg>
-    </figure>
+    </div>
   );
-}
-
-/* Verdict ticks/crosses now live on the card chrome (border colour + label),
-   not inside the drawing — they kept covering the diagrams. */
-function Mark(_p: { x: number; y: number; ok: boolean }) {
-  return null;
-}
-
-function Callout({ x, y, r = 19, tone = BAD }: { x: number; y: number; r?: number; tone?: string }) {
-  return <circle cx={x} cy={y} r={r} fill="none" stroke={tone} strokeWidth="1.6" strokeDasharray="4 3" opacity="0.95" />;
-}
-
-function Dim({ x1, y1, x2, y2, label, tone = DIM }: { x1: number; y1: number; x2: number; y2: number; label: string; tone?: string }) {
-  const horizontal = y1 === y2;
-  const y = y1;
-  const x = x1;
-  const arrowA = horizontal
-    ? `M ${x1} ${y} l 6 -3.4 v 6.8 z`
-    : `M ${x} ${y1} l -3.4 6 h 6.8 z`;
-  const arrowB = horizontal
-    ? `M ${x2} ${y} l -6 -3.4 v 6.8 z`
-    : `M ${x} ${y2} l -3.4 -6 h 6.8 z`;
-  const midX = horizontal ? (x1 + x2) / 2 : x1;
-  const midY = horizontal ? y - 5 : (y1 + y2) / 2 + 3;
-  return (
-    <g>
-      <path d={horizontal ? `M ${x1} ${y} H ${x2}` : `M ${x} ${y1} V ${y2}`} stroke={tone} strokeWidth="1.1" />
-      <path d={arrowA} fill={tone} />
-      <path d={arrowB} fill={tone} />
-      <text x={horizontal ? midX : midX + 7} y={midY} textAnchor={horizontal ? "middle" : "start"} fontFamily={MONO} fontSize="8" fill={tone}>
-        {label}
-      </text>
-    </g>
-  );
-}
-
-function Hatch({ x, y, w, h, tone = "#2b6a50", gap = 7 }: { x: number; y: number; w: number; h: number; tone?: string; gap?: number }) {
-  const id = "h" + useId().replace(/[^a-zA-Z0-9]/g, "");
-  return (
-    <g>
-      <defs>
-        <pattern id={id} width={gap} height={gap} patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-          <line x1="0" y1="0" x2="0" y2={gap} stroke={tone} strokeWidth="1.4" />
-        </pattern>
-      </defs>
-      <rect x={x} y={y} width={w} height={h} rx="4" fill={`url(#${id})`} stroke={tone} strokeWidth="1.2" />
-    </g>
-  );
-}
-
-function ThPad({ x, y }: { x: number; y: number }) {
-  return (
-    <g>
-      <circle cx={x} cy={y} r="9" fill={GOLD} />
-      <circle cx={x} cy={y} r="3.4" fill="#0d281e" />
-    </g>
-  );
-}
-
-function Smd({ x, y, w = 20, h = 12 }: { x: number; y: number; w?: number; h?: number }) {
-  return <rect x={x} y={y} width={w} height={h} rx="2.5" fill={GOLD} />;
 }
 
 function Lbl({
@@ -120,7 +74,7 @@ function Lbl({
   y,
   children,
   tone = DIM,
-  size = 8.5,
+  size = 8,
   anchor = "middle",
 }: {
   x: number;
@@ -130,1400 +84,432 @@ function Lbl({
   size?: number;
   anchor?: "middle" | "start" | "end";
 }) {
+  const text = typeof children === "string" ? clean(children) : children;
   return (
     <text x={x} y={y} textAnchor={anchor} fontFamily={MONO} fontSize={size} fill={tone}>
-      {children}
+      {text}
     </text>
   );
 }
 
-/* ------------------------------------------------------------------ */
+function Callout({ x, y, r = 19, tone = BAD }: { x: number; y: number; r?: number; tone?: string }) {
+  return <circle cx={x} cy={y} r={r} fill="none" stroke={tone} strokeWidth="1.5" strokeDasharray="4 3" opacity="0.95" />;
+}
+
+function ThPad({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <circle cx={x} cy={y} r="8" fill={GOLD} />
+      <circle cx={x} cy={y} r="3" fill="#0d281e" />
+    </g>
+  );
+}
+
+function Smd({ x, y, w = 20, h = 12 }: { x: number; y: number; w?: number; h?: number }) {
+  return <rect x={x} y={y} width={w} height={h} rx="2.5" fill={GOLD} />;
+}
+
+function Hatch({ x, y, w, h, tone = "#2b6a50", gap = 7 }: { x: number; y: number; w: number; h: number; tone?: string; gap?: number }) {
+  const id = "h" + x + y + Math.round(Math.random() * 1e6);
+  return (
+    <g>
+      <defs>
+        <pattern id={id} width={gap} height={gap} patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="0" y2={gap} stroke={tone} strokeWidth="1.3" />
+        </pattern>
+      </defs>
+      <rect x={x} y={y} width={w} height={h} rx="4" fill={`url(#${id})`} stroke={tone} strokeWidth="1.1" />
+    </g>
+  );
+}
+
+/* ---------------- Trace Routing ---------------- */
 
 const Corners = () => (
   <Mini caption="MITRE EVERY TURN">
-    <path d="M 22 100 H 88 L 128 58 H 198" fill="none" stroke={CU} strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M 22 100 H 88 L 128 58 H 198" fill="none" stroke="#8a5a33" strokeWidth="3" strokeDasharray="1 8" />
-    <Mark x={182} y={28} ok />
-    <Lbl x={100} y={42} tone={GOOD}>45°</Lbl>
+    <path d="M 24 92 H 88 L 128 52 H 196" fill="none" stroke={CU} strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+    <Lbl x={110} y={20} tone={GOOD} size={8}>45 degree bends, no right angles</Lbl>
+  </Mini>
+);
+
+const Widths = () => (
+  <Mini caption="WIDTH BY RAIL">
+    <path d="M 26 40 H 130" stroke={CU} strokeWidth="13" />
+    <Lbl x={140} y={44} tone={GOLD} size={8} anchor="start">24V 80 mil</Lbl>
+    <path d="M 26 62 H 130" stroke={CU} strokeWidth="6" />
+    <Lbl x={140} y={65} tone={GOLD} size={8} anchor="start">5V 30 mil</Lbl>
+    <path d="M 26 80 H 130" stroke={CU} strokeWidth="3.6" />
+    <Lbl x={140} y={82} tone={GOLD} size={8} anchor="start">3V3 20 mil</Lbl>
+    <path d="M 26 96 H 130" stroke={CU} strokeWidth="1.8" />
+    <Lbl x={140} y={98} tone={GOLD} size={8} anchor="start">sig 10 mil</Lbl>
+    <Lbl x={110} y={120} tone={DIM} size={7}>set once in net classes</Lbl>
   </Mini>
 );
 
 const Corner90 = () => (
   <Mini caption="RIGHT ANGLE = ACID TRAP">
-    <path d="M 22 98 H 108 V 34 H 198" fill="none" stroke={CU} strokeWidth="11" strokeLinecap="round" strokeLinejoin="miter" />
-    {/* stale etchant pooling tight into the inner notch */}
-    <path d="M 113.5 92.5 L 131 92.5 A 17.5 17.5 0 0 0 113.5 75 Z" fill={BAD} opacity="0.78" />
-    <circle cx={121} cy={86} r={1.6} fill="#fbd4d0" opacity="0.9" />
-    <circle cx={117} cy={80.5} r={1.1} fill="#fbd4d0" opacity="0.85" />
-    <circle cx={125.5} cy={89.5} r={1.2} fill="#fbd4d0" opacity="0.85" />
-    {/* both copper walls eaten back beside the pool */}
-    <path d="M 116 94.6 H 125" stroke={BAD} strokeWidth="1.2" strokeDasharray="2.5 2" />
-    <path d="M 111.4 90 V 81" stroke={BAD} strokeWidth="1.2" strokeDasharray="2.5 2" />
-    <Callout x={121} y={84} r={23} />
-    <path d="M 144 84 H 149" stroke={BAD} strokeWidth="1.2" />
-    <Lbl x={151} y={80} tone={BAD} anchor="start" size={7.5}>pooled etchant</Lbl>
-    <Lbl x={151} y={92} tone={BAD} anchor="start" size={7.5}>eats both walls</Lbl>
+    <path d="M 24 90 H 108 V 30 H 196" fill="none" stroke={CU} strokeWidth="11" strokeLinecap="butt" strokeLinejoin="miter" />
+    <path d="M 113 79 Q 113 86 121 86 L 121 90 Q 110 90 110 79 Z" fill="#4fae9b" opacity="0.9" />
+    <Callout x={113} y={85} r={18} />
+    <Lbl x={204} y={60} tone={BAD} size={7.5} anchor="end">etchant pools</Lbl>
+    <Lbl x={204} y={71} tone={BAD} size={7.5} anchor="end">and eats the corner</Lbl>
   </Mini>
 );
 
-const NetClass = () => (
-  <Mini caption="NET CLASSES">
-    <path d="M 24 34 H 138" stroke={CU} strokeWidth="16" />
-    <path d="M 24 68 H 168" stroke={CU} strokeWidth="10" />
-    <path d="M 24 100 H 118" stroke={CU} strokeWidth="5.5" />
-    <Lbl x={152} y={37} tone={GOLD} anchor="start">PWR 0.5 mm</Lbl>
-    <Lbl x={176} y={71} tone={GOLD} anchor="start">SIG 0.25</Lbl>
-    <Lbl x={130} y={103} tone={GOLD} anchor="start">AUX 0.15</Lbl>
-    <Mark x={198} y={100} ok />
+const ViaSpace = () => (
+  <Mini caption="VIAS ALIGNED AND SPACED">
+    {[0, 1, 2, 3].map((i) => (
+      <g key={i}>
+        <circle cx={46 + i * 30} cy={52} r="6.5" fill={GOLD} />
+        <circle cx={46 + i * 30} cy={52} r="2.6" fill="#0d281e" />
+      </g>
+    ))}
+    <Lbl x={110} y={24} tone={GOOD} size={8}>neat column, room between</Lbl>
+    <rect x={40} y={78} width={52} height={26} fill="none" stroke={BAD} strokeWidth="1.3" strokeDasharray="4 3" />
+    <Lbl x={66} y={94} tone={BAD} size={7}>part underneath</Lbl>
+    <circle cx={66} cy={68} r="6.5" fill={GOLD} />
+    <circle cx={66} cy={68} r="2.6" fill="#0d281e" />
+    <path d="M 60 62 l 12 12 m 0 -12 l -12 12" stroke={BAD} strokeWidth="1.6" />
+    <Lbl x={204} y={86} tone={BAD} size={7.5} anchor="end">check the far</Lbl>
+    <Lbl x={204} y={97} tone={BAD} size={7.5} anchor="end">layer first</Lbl>
   </Mini>
 );
 
-const Neckdown = () => (
-  <Mini caption="WIDTH MUST HOLD">
-    <path d="M 20 66 H 78" stroke={CU} strokeWidth="13" />
-    <path d="M 78 66 H 142" stroke={CU} strokeWidth="3.5" />
-    <path d="M 142 66 H 200" stroke={CU} strokeWidth="13" />
-    <Callout x={110} y={66} r={24} />
-    <Lbl x={110} y={104} tone={BAD}>below class width</Lbl>
-    <Lbl x={110} y={30} tone={BAD}>it becomes a fuse</Lbl>
+const Stub = () => (
+  <Mini caption="NO DEAD-ENDS">
+    <path d="M 24 48 H 196" stroke={CU} strokeWidth="7" />
+    <path d="M 120 48 V 96" stroke={CU} strokeWidth="7" />
+    <circle cx={120} cy={100} r="6" fill="none" stroke={BAD} strokeWidth="1.6" strokeDasharray="3 3" />
+    <Lbl x={120} y={120} tone={BAD} size={7.5}>stub picks up noise</Lbl>
+    <path d="M 40 84 H 88" stroke={CU} strokeWidth="7" />
+    <Lbl x={64} y={104} tone={GOOD} size={7.5}>clean</Lbl>
+  </Mini>
+);
+
+/* ---------------- Power ---------------- */
+
+const Decap = () => (
+  <Mini caption="ONE CAP PER PIN">
+    <rect x={76} y={40} width={72} height={56} fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={112} y={72} tone={SILK} size={10}>MCU</Lbl>
+    {[50, 70, 88].map((y) => (
+      <g key={y}>
+        <path d={`M 56 ${y} H 76`} stroke={CU} strokeWidth="4" />
+        <rect x={38} y={y - 6} width={16} height={12} rx="2" fill={GOLD} />
+        <path d={`M 38 ${y} H 28`} stroke={CU} strokeWidth="2.2" />
+      </g>
+    ))}
+    <Lbl x={112} y={22} tone={GOOD} size={8}>short path, one each</Lbl>
+    <Hatch x={18} y={106} w={184} h={10} />
   </Mini>
 );
 
 const Relief = () => (
   <Mini caption="THERMAL RELIEF">
-    <Hatch x={16} y={14} w={188} h={104} />
-    <path d="M 110 42 V 26 M 110 90 V 106 M 86 66 H 70 M 134 66 H 150" stroke={CU} strokeWidth="7" />
-    <circle cx={110} cy={66} r="17" fill={GOLD} />
-    <circle cx={110} cy={66} r="6" fill="#0d281e" />
-    <Mark x={186} y={26} ok />
-    <Lbl x={110} y={14} tone={GOOD} size={7.5}> </Lbl>
-  </Mini>
-);
-
-const Stitch = () => (
-  <Mini caption="STITCHED POURS">
-    <Hatch x={16} y={16} w={188} h={44} />
-    <Hatch x={16} y={76} w={188} h={40} />
-    {[56, 110, 164].map((x) => (
-      <g key={x}>
-        <path d={`M ${x} 58 V 78`} stroke={DIM} strokeWidth="1.2" strokeDasharray="3 3" />
-        <circle cx={x} cy={68} r="6.5" fill={GOLD} />
-        <circle cx={x} cy={68} r="2.6" fill="#0d281e" />
-      </g>
-    ))}
-    <Lbl x={24} y={42} tone="#7fd6b4" anchor="start">GND top</Lbl>
-    <Lbl x={24} y={100} tone="#7fd6b4" anchor="start">GND bottom</Lbl>
-    <Mark x={192} y={68} ok />
-  </Mini>
-);
-
-const ViaInPad = () => (
-  <Mini caption="VIA PLACEMENT">
-    <path d="M 110 18 V 114" stroke="#1c4636" strokeWidth="1.4" strokeDasharray="5 4" />
-    <Smd x={40} y={52} w={52} h={30} />
-    <circle cx={66} cy={67} r="7.5" fill="#0d281e" stroke={SILK} strokeWidth="1.4" />
-    <Mark x={66} y={104} ok={false} />
-    <Lbl x={66} y={30} tone={BAD}>via in pad</Lbl>
-    <Smd x={130} y={52} w={52} h={30} />
-    <circle cx={196} cy={67} r="7.5" fill="#0d281e" stroke={SILK} strokeWidth="1.4" />
-    <path d="M 184 67 H 192" stroke={CU} strokeWidth="5" />
-    <Mark x={196} y={104} ok />
-    <Lbl x={164} y={30} tone={GOOD}>via outside</Lbl>
+    <Hatch x={16} y={24} w={188} h={84} />
+    <path d="M 110 46 V 30 M 110 82 V 98 M 88 64 H 72 M 132 64 H 148" stroke={CU} strokeWidth="7" />
+    <circle cx={110} cy={64} r="16" fill={GOLD} />
+    <circle cx={110} cy={64} r="5.5" fill="#0d281e" />
+    <Lbl x={110} y={122} tone={GOOD} size={7.5}>spokes keep the pad hot enough to solder</Lbl>
   </Mini>
 );
 
 const Flood = () => (
   <Mini caption="POUR CLEARANCE">
-    <Hatch x={16} y={16} w={120} h={100} />
-    <circle cx={120} cy={50} r="13" fill={GOLD} />
-    <circle cx={120} cy={50} r="4.5" fill="#0d281e" />
-    <Callout x={112} y={42} r={17} />
-    <Lbl x={76} y={96} tone={BAD} anchor="start">0.0 mm — short</Lbl>
-    <circle cx={176} cy={66} r="13" fill={GOLD} />
-    <circle cx={176} cy={66} r="4.5" fill="#0d281e" />
-    <circle cx={176} cy={66} r="19" fill="none" stroke={GOOD} strokeWidth="1.4" strokeDasharray="4 3" />
-    <Lbl x={176} y={106} tone={GOOD}>cleared</Lbl>
+    <Hatch x={16} y={28} w={116} h={76} />
+    <circle cx={118} cy={52} r="12" fill={GOLD} />
+    <circle cx={118} cy={52} r="4" fill="#0d281e" />
+    <Callout x={110} y={44} r={16} />
+    <Lbl x={60} y={92} tone={BAD} size={7.5} anchor="start">0.0 mm, a short</Lbl>
+    <circle cx={176} cy={66} r="12" fill={GOLD} />
+    <circle cx={176} cy={66} r="4" fill="#0d281e" />
+    <circle cx={176} cy={66} r="18" fill="none" stroke={GOOD} strokeWidth="1.3" strokeDasharray="4 3" />
+    <Lbl x={176} y={118} tone={GOOD} size={7.5}>cleared</Lbl>
   </Mini>
 );
+
+const RailZone = () => (
+  <Mini caption="RAILS RIDE COPPER">
+    <rect x={20} y={38} width={42} height={36} fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={41} y={60} tone={SILK} size={8}>SW</Lbl>
+    <Hatch x={74} y={44} w={50} h={24} tone="#8a5a33" />
+    <Lbl x={99} y={60} tone="#f6c489" size={7}>5V pour</Lbl>
+    <circle cx={146} cy={56} r="13" fill="none" stroke={GOLD} strokeWidth="2" />
+    <circle cx={146} cy={56} r="4.5" fill="#0d281e" />
+    <Hatch x={110} y={86} w={94} h={26} />
+    <Lbl x={157} y={102} tone="#7fd6b4" size={7.5}>3V3 zone</Lbl>
+    <Lbl x={110} y={22} tone={GOOD} size={8}>wide copper in, wide copper out</Lbl>
+  </Mini>
+);
+
+const DecapBunch = () => (
+  <Mini caption="SHARED CAP = COUPLED NOISE">
+    <rect x={22} y={36} width={40} height={64} fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={42} y={72} tone={SILK} size={9}>MCU</Lbl>
+    {[46, 68, 90].map((y) => (
+      <path key={y} d={`M 62 ${y} H 88`} stroke={CU} strokeWidth="3.6" />
+    ))}
+    <path d="M 88 46 V 90 M 88 68 H 128 V 76" stroke={CU} strokeWidth="3.6" fill="none" />
+    <rect x={120} y={78} width={16} height={12} rx="2" fill={GOLD} />
+    <path d="M 128 90 V 100" stroke={CU} strokeWidth="2.2" />
+    <Callout x={108} y={66} r={28} />
+    <Lbl x={170} y={50} tone={BAD} size={7.5} anchor="end">one cap feeds</Lbl>
+    <Lbl x={170} y={61} tone={BAD} size={7.5} anchor="end">three pins</Lbl>
+    <Lbl x={110} y={120} tone={BAD} size={7}>return currents share the bunch</Lbl>
+  </Mini>
+);
+
+/* ---------------- CAN / clock ---------------- */
+
+const CanPair = () => (
+  <Mini caption="MIRROR THE PAIR">
+    <path d="M 24 46 H 80 L 96 60 H 140 L 156 46 H 196" fill="none" stroke={CU} strokeWidth="6" />
+    <path d="M 24 86 H 80 L 96 72 H 140 L 156 86 H 196" fill="none" stroke="#56c3b2" strokeWidth="6" />
+    <path d="M 24 66 H 196" stroke={DIM} strokeWidth="1" strokeDasharray="2 5" />
+    <Lbl x={48} y={34} tone={GOOD} size={7.5} anchor="start">CANH</Lbl>
+    <Lbl x={48} y={104} tone={GOOD} size={7.5} anchor="start">CANL</Lbl>
+    <Lbl x={170} y={20} tone={DIM} size={7} anchor="end">mirror axis</Lbl>
+    <Lbl x={110} y={122} tone={GOOD} size={7.5}>same length, same bends, same spacing</Lbl>
+  </Mini>
+);
+
+const Xtal = () => (
+  <Mini caption="LOAD CAPS BEFORE THE CRYSTAL">
+    <path d="M 26 30 V 104" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={14} y={68} tone={DIM} size={7}>MCU</Lbl>
+    <path d="M 26 46 H 148 V 56 M 26 86 H 176 V 76" fill="none" stroke={CU} strokeWidth="3.2" />
+    <path d="M 62 46 V 52" stroke={CU} strokeWidth="2.2" />
+    <path d="M 55 58 H 69 M 55 64 H 69" stroke={GOLD} strokeWidth="2.4" />
+    <path d="M 62 64 V 72" stroke={CU} strokeWidth="2" />
+    <path d="M 56 74 H 68 M 58 77 H 66 M 60 80 H 64" stroke={DIM} strokeWidth="1.3" />
+    <path d="M 96 86 V 92" stroke={CU} strokeWidth="2.2" />
+    <path d="M 89 98 H 103 M 89 104 H 103" stroke={GOLD} strokeWidth="2.4" />
+    <path d="M 96 104 V 112" stroke={CU} strokeWidth="2" />
+    <path d="M 90 114 H 102 M 92 117 H 100 M 94 120 H 98" stroke={DIM} strokeWidth="1.3" />
+    <rect x={140} y={56} width={44} height={16} fill="#17362a" stroke={GOLD} strokeWidth="1.5" />
+    <Lbl x={162} y={67} tone={GOLD} size={8}>X1 8M</Lbl>
+    <Lbl x={110} y={20} tone={GOOD} size={8}>caps first, mirrored, shortest stubs</Lbl>
+  </Mini>
+);
+
+const CanSplit = () => (
+  <Mini caption="SKEW = NOISE INSIDE">
+    <path d="M 24 40 H 196" fill="none" stroke={CU} strokeWidth="6" />
+    <path d="M 24 96 H 70 L 86 76 H 130 L 150 96 H 196" fill="none" stroke="#56c3b2" strokeWidth="6" />
+    <path d="M 188 40 V 96" stroke={BAD} strokeWidth="1.2" strokeDasharray="3 3" />
+    <Lbl x={176} y={68} tone={BAD} size={7} anchor="end">skew</Lbl>
+    <Lbl x={110} y={22} tone={BAD} size={8}>CANH arrives first</Lbl>
+    <Lbl x={110} y={118} tone={BAD} size={7}>noise couples into only one line</Lbl>
+  </Mini>
+);
+
+const ReturnSplit = () => (
+  <Mini caption="RETURN PATHS NEED FLOOR">
+    <Hatch x={16} y={48} w={76} h={52} />
+    <Hatch x={128} y={48} w={76} h={52} />
+    <path d="M 24 34 H 196" stroke={CU} strokeWidth="6" />
+    <path d="M 100 76 C 60 118, 160 118, 128 76" stroke={BAD} strokeWidth="1.5" strokeDasharray="4 3" fill="none" />
+    <Lbl x={110} y={64} tone={DIM} size={7}>split</Lbl>
+    <Lbl x={110} y={122} tone={BAD} size={7}>return forced the long way, big loop</Lbl>
+  </Mini>
+);
+
+/* ---------------- Footprints ---------------- */
 
 const Footprint = () => (
   <Mini caption="IPC-7351 LEVEL B">
     {[0, 1, 2, 3].map((i) => (
       <g key={i}>
-        <Smd x={52} y={26 + i * 22} w={26} h={13} />
-        <Smd x={142} y={26 + i * 22} w={26} h={13} />
+        <Smd x={54} y={36 + i * 20} w={24} h={12} />
+        <Smd x={142} y={36 + i * 20} w={24} h={12} />
       </g>
     ))}
-    <rect x={86} y={22} width={48} height={88} fill="none" stroke={SILK} strokeWidth="1.3" />
-    <circle cx={93} cy={32} r="2.6" fill={SILK} />
-    <Dim x1={78} y1={16} x2={142} y2={16} label="pitch ok" tone={GOOD} />
-    <Mark x={196} y={110} ok />
-  </Mini>
-);
-
-const Pin1 = () => (
-  <Mini caption="POLARITY MARKED">
-    <rect x={76} y={20} width={68} height={92} rx="3" fill="none" stroke={SILK} strokeWidth="1.4" />
-    <path d="M 102 20 a 8 8 0 0 0 16 0" fill="none" stroke={SILK} strokeWidth="1.4" />
-    {[0, 1, 2, 3].map((i) => (
-      <g key={i}>
-        <ThPad x={56} y={34 + i * 22} />
-        <ThPad x={164} y={34 + i * 22} />
-      </g>
-    ))}
-    <circle cx={56} cy={34} r="13" fill="none" stroke={GOOD} strokeWidth="1.6" />
-    <path d="M 50 15 L 56 7 L 62 15 Z" fill={SILK} />
-    <Lbl x={56} y={60} tone={GOOD}>1</Lbl>
-    <Mark x={196} y={26} ok />
-  </Mini>
-);
-
-const SketchFp = () => (
-  <Mini caption="UNVERIFIED PADS">
-    <path d="M 40 40 q 4 -6 26 -4 q 6 1 5 10 q -1 9 -14 8 q -20 -1 -17 -14" fill={GOLD} opacity="0.9" />
-    <path d="M 130 70 q 8 -8 30 -2 q 8 3 4 12 q -5 10 -20 7 q -18 -4 -14 -17" fill={GOLD} opacity="0.9" />
-    <Dim x1={40} y1={86} x2={72} y2={86} label="1.1?" tone={BAD} />
-    <Dim x1={132} y1={106} x2={168} y2={106} label="1.4?" tone={BAD} />
-    <Lbl x={110} y={26} tone={BAD}>sketched by eye</Lbl>
-    <Mark x={196} y={24} ok={false} />
+    <rect x={88} y={32} width={44} height={72} fill="none" stroke={SILK} strokeWidth="1.3" />
+    <circle cx={95} cy={40} r="2.4" fill={SILK} />
+    <Lbl x={110} y={20} tone={GOOD} size={8}>library footprint, pads match the part</Lbl>
+    <Lbl x={110} y={122} tone={DIM} size={7}>pin 1 marked on silk and copper</Lbl>
   </Mini>
 );
 
 const Mirror = () => (
   <Mini caption="WRONG LAYER VIEW">
-    <rect x={46} y={36} width={128} height={56} rx="3" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <g transform="translate(110 64) scale(-1 1)">
-      <text x={0} y={6} textAnchor="middle" fontFamily={MONO} fontSize="13" fill={SILK}>U3</text>
+    <rect x={50} y={40} width={120} height={52} rx="3" fill="none" stroke={SILK} strokeWidth="1.3" />
+    <g transform="translate(110 66) scale(-1 1)">
+      <text x={0} y={5} textAnchor="middle" fontFamily={MONO} fontSize="13" fill={SILK}>U3</text>
     </g>
     {[0, 1, 2].map((i) => (
-      <Smd key={i} x={56 + i * 38} y={26} w={18} h={10} />
+      <Smd key={i} x={60 + i * 36} y={30} w={18} h={9} />
     ))}
     {[0, 1, 2].map((i) => (
-      <Smd key={`b${i}`} x={56 + i * 38} y={92} w={18} h={10} />
+      <Smd key={`b${i}`} x={60 + i * 36} y={94} w={18} h={9} />
     ))}
-    <Lbl x={110} y={84} tone={BAD}>text mirrored</Lbl>
-    <Mark x={196} y={24} ok={false} />
+    <Lbl x={110} y={116} tone={BAD} size={7.5}>text mirrored, part can't be placed</Lbl>
   </Mini>
 );
 
-const RefDes = () => (
-  <Mini caption="LABELS OUTSIDE BODY">
-    <rect x={70} y={44} width={80} height={48} rx="4" fill="none" stroke={SILK} strokeWidth="1.4" />
-    <path d="M 70 56 a 10 10 0 0 1 0 24" fill="none" stroke={SILK} strokeWidth="1.4" />
-    <Smd x={52} y={52} w={16} h={10} />
-    <Smd x={52} y={74} w={16} h={10} />
-    <Smd x={152} y={52} w={16} h={10} />
-    <Smd x={152} y={74} w={16} h={10} />
-    <path d="M 128 40 L 152 26" stroke={DIM} strokeWidth="1.1" />
-    <Lbl x={166} y={24} tone={SILK} size={11}>C12</Lbl>
-    <Mark x={32} y={28} ok />
-    <Lbl x={110} y={116} tone={GOOD} size={7.5}>1.2 mm tall, outside body</Lbl>
+const HeaderGap = () => (
+  <Mini caption="HOUSINGS NEED ROOM">
+    {[0, 1, 2].map((i) => (
+      <g key={i}>
+        {[0, 1, 2, 3].map((p) => (
+          <circle key={p} cx={32 + i * 32} cy={46 + p * 13} r="3.6" fill={GOLD} />
+        ))}
+      </g>
+    ))}
+    <Callout x={64} y={64} r={34} />
+    <Lbl x={70} y={110} tone={BAD} size={7}>housings collide</Lbl>
+    <path d="M 138 40 V 92" stroke={GOOD} strokeWidth="1.3" strokeDasharray="4 3" />
+    {[0, 1, 2, 3].map((p) => (
+      <circle key={`r${p}`} cx={178} cy={46 + p * 13} r="3.6" fill={GOLD} />
+    ))}
+    <Lbl x={178} y={110} tone={GOOD} size={7}>room to plug</Lbl>
+  </Mini>
+);
+
+const Mount = () => (
+  <Mini caption="MOUNTING DONE RIGHT">
+    <circle cx={60} cy={60} r="15" fill="none" stroke={GOLD} strokeWidth="2" />
+    <circle cx={60} cy={60} r="6.5" fill="#0d281e" />
+    <circle cx={60} cy={60} r="25" fill="none" stroke={GOOD} strokeWidth="1.2" strokeDasharray="4 3" />
+    <Lbl x={60} y={104} tone={GOOD} size={7}>no copper under the screw</Lbl>
+    <circle cx={160} cy={60} r="15" fill="none" stroke={GOLD} strokeWidth="2" />
+    <circle cx={160} cy={60} r="6.5" fill="#0d281e" />
+    <Hatch x={138} y={38} w={44} h={44} tone="#8a5a33" />
+    <Callout x={160} y={60} r={23} />
+    <Lbl x={160} y={116} tone={BAD} size={7}>pour under the screw, a short</Lbl>
+  </Mini>
+);
+
+/* ---------------- Silkscreen ---------------- */
+
+const SilkHdr = () => (
+  <Mini caption="FUNCTION FIRST, PINS AFTER">
+    {[0, 1, 2, 3].map((i) => (
+      <ThPad key={i} x={52} y={40 + i * 21} />
+    ))}
+    <rect x={34} y={26} width={36} height={90} fill="none" stroke={SILK} strokeWidth="1.1" strokeDasharray="4 3" />
+    <Lbl x={100} y={36} tone={SILK} size={9} anchor="start">UART_VRTG</Lbl>
+    <path d="M 62 40 H 92 M 62 61 H 92 M 62 82 H 92 M 62 103 H 92" stroke={DIM} strokeWidth="1" />
+    <Lbl x={96} y={43} tone={DIM} size={7.5} anchor="start">V 5V</Lbl>
+    <Lbl x={96} y={64} tone={DIM} size={7.5} anchor="start">R RX</Lbl>
+    <Lbl x={96} y={85} tone={DIM} size={7.5} anchor="start">T TX</Lbl>
+    <Lbl x={96} y={106} tone={DIM} size={7.5} anchor="start">G GND</Lbl>
+    <Lbl x={110} y={122} tone={GOOD} size={7}>read left to right, pin 1 marked</Lbl>
   </Mini>
 );
 
 const SilkPad = () => (
   <Mini caption="KEEP INK OFF COPPER">
-    <Smd x={46} y={48} w={40} h={26} />
-    <Smd x={46} y={84} w={40} h={26} />
-    <path d="M 30 96 L 100 40" stroke={SILK} strokeWidth="3" opacity="0.9" />
-    <path d="M 34 104 L 104 48" stroke={SILK} strokeWidth="1.6" opacity="0.7" />
-    <Callout x={72} y={60} r={20} />
-    <Lbl x={150} y={58} tone={BAD}>ink on pad</Lbl>
-    <Lbl x={150} y={72} tone={BAD} size={7.5}>solder won't wet</Lbl>
-    <Mark x={192} y={104} ok={false} />
+    <Smd x={48} y={48} w={38} h={24} />
+    <Smd x={48} y={82} w={38} h={22} />
+    <path d="M 32 94 L 100 42" stroke={SILK} strokeWidth="3" opacity="0.9" />
+    <Callout x={70} y={62} r={19} />
+    <Lbl x={150} y={56} tone={BAD} size={8}>ink on pad</Lbl>
+    <Lbl x={150} y={68} tone={BAD} size={7}>solder won't wet</Lbl>
   </Mini>
 );
 
-const NoPolarity = () => (
-  <Mini caption="MARK THE CATHODE">
-    <rect x={62} y={44} width={96} height={44} rx="4" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <rect x={62} y={44} width={20} height={44} rx="4" fill="#1f4636" stroke={SILK} strokeWidth="1.3" />
-    <path d="M 42 66 H 62 M 158 66 H 178" stroke={CU} strokeWidth="6" />
-    <text x={110} y={72} textAnchor="middle" fontFamily={MONO} fontSize="14" fill={BAD} opacity="0.85">?</text>
-    <Callout x={110} y={66} r={24} />
-    <Lbl x={110} y={112} tone={BAD}>no band, no dot, no plus</Lbl>
+const RevSilk = () => (
+  <Mini caption="THE BOARD INTRODUCES ITSELF">
+    <rect x={24} y={30} width={172} height={76} rx="6" fill="none" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={36} y={54} tone={SILK} size={10} anchor="start">ROBO-PWR</Lbl>
+    <Lbl x={36} y={70} tone={DIM} size={8} anchor="start">REV D, 2026-02</Lbl>
+    <Lbl x={36} y={86} tone={DIM} size={7} anchor="start">HKUST ROBOTICS</Lbl>
+    {[0, 1, 2].map((i) => (
+      <circle key={i} cx={176} cy={46 + i * 15} r="3.6" fill={GOLD} />
+    ))}
+    <Lbl x={110} y={122} tone={GOOD} size={7.5}>which board is this? answered on the silk</Lbl>
   </Mini>
 );
+
+/* ---------------- Clearance ---------------- */
 
 const Drc = () => (
   <Mini caption="DRC @ FAB LIMITS">
-    <path d="M 24 46 H 196" stroke={CU} strokeWidth="9" />
-    <path d="M 24 92 H 196" stroke={CU} strokeWidth="9" />
-    <Dim x1={110} y1={53} x2={110} y2={85} label="0.2 mm" tone={GOOD} />
-    <Mark x={192} y={24} ok />
-    <Lbl x={26} y={26} tone={GOOD} anchor="start" size={9}>0 errors · 0 warnings</Lbl>
+    <path d="M 24 50 H 196" stroke={CU} strokeWidth="9" />
+    <path d="M 24 88 H 196" stroke={CU} strokeWidth="9" />
+    <path d="M 110 57 V 81" stroke={GOOD} strokeWidth="1.1" />
+    <Lbl x={122} y={72} tone={GOOD} size={8} anchor="start">0.2 mm</Lbl>
+    <Lbl x={110} y={22} tone={GOOD} size={8.5}>0 errors, 0 warnings</Lbl>
   </Mini>
 );
 
 const Sliver = () => (
   <Mini caption="ISOLATED ISLANDS">
-    <Smd x={42} y={42} w={34} h={48} />
-    <Smd x={144} y={42} w={34} h={48} />
-    <path d="M 92 40 L 112 66 L 92 92 L 96 66 Z" fill={CU} opacity="0.95" />
-    <Callout x={100} y={66} r={21} />
-    <Lbl x={110} y={114} tone={BAD}>sliver can bridge pads</Lbl>
+    <Smd x={42} y={44} w={32} h={44} />
+    <Smd x={146} y={44} w={32} h={44} />
+    <path d="M 92 42 L 112 66 L 92 90 L 96 66 Z" fill={CU} opacity="0.95" />
+    <Callout x={100} y={66} r={20} />
+    <Lbl x={110} y={116} tone={BAD} size={7.5}>sliver can bridge pads</Lbl>
   </Mini>
 );
 
 const Creepage = () => (
   <Mini caption="SURFACE DISTANCE">
-    <rect x={24} y={34} width={70} height={64} rx="4" fill={CU} opacity="0.85" />
-    <rect x={112} y={34} width={70} height={64} rx="4" fill={CU} opacity="0.85" />
-    <Dim x1={96} y1={66} x2={110} y2={66} label="" tone={BAD} />
-    <Lbl x={103} y={56} tone={BAD} size={8}>0.4!</Lbl>
-    <path d="M 100 14 l -6 10 h 6 l -5 10" fill="none" stroke={BAD} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-    <Lbl x={212} y={24} tone={BAD} anchor="end">tracking arc risk</Lbl>
+    <rect x={26} y={42} width={68} height={56} rx="4" fill={CU} opacity="0.85" />
+    <rect x={116} y={42} width={68} height={56} rx="4" fill={CU} opacity="0.85" />
+    <path d="M 100 22 l -6 10 h 6 l -5 10" fill="none" stroke={BAD} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    <Lbl x={110} y={116} tone={BAD} size={7.5}>too close, tracking arc risk over time</Lbl>
   </Mini>
 );
+
+/* ---------------- Deliverables ---------------- */
 
 const Gerbers = () => (
   <Mini caption="FULL SET, EYEBALLED">
     {[
       ["GT L", "#e0955a"], ["GB L", "#c77f45"], ["GTS", "#2b6a50"], ["DRL", "#9cb8a7"],
     ].map(([t, c], i) => (
-      <g key={t}>
-        <rect x={34 + i * 7} y={76 - i * 14} width={104} height={26} rx="3" fill="#0f231b" stroke={c as string} strokeWidth="1.4" />
-        <text x={44 + i * 7} y={93 - i * 14} fontFamily={MONO} fontSize="9" fill={c as string}>{t}</text>
+      <g key={t as string}>
+        <rect x={36 + i * 7} y={78 - i * 14} width={100} height={24} rx="3" fill="#0f231b" stroke={c as string} strokeWidth="1.3" />
+        <text x={46 + i * 7} y={94 - i * 14} fontFamily={MONO} fontSize="9" fill={c as string}>{t}</text>
       </g>
     ))}
-    <Lbl x={210} y={112} tone={GOOD} size={7.5} anchor="end">+ paste + outline</Lbl>
+    <Lbl x={180} y={114} tone={GOOD} size={7.5} anchor="end">+ paste + outline</Lbl>
   </Mini>
 );
 
 const Drill = () => (
-  <Mini caption="DRILL ↔ PADS">
-    <ThPad x={46} y={46} />
-    <ThPad x={46} y={92} />
-    <ThPad x={110} y={46} />
-    <ThPad x={110} y={92} />
-    <g opacity="0.9">
-      <circle cx={110} cy={46} r="3.4" fill="none" stroke={BAD} strokeWidth="1.4" />
-      <path d="M 96 32 v 10 M 91 37 h 10" stroke={BAD} strokeWidth="1.4" />
-      <circle cx={160} cy={70} r="3.4" fill="none" stroke={BAD} strokeWidth="1.4" />
-      <path d="M 160 58 v 8 M 156 62 h 8" stroke={BAD} strokeWidth="1.4" />
-      <circle cx={178} cy={100} r="3.4" fill="none" stroke={BAD} strokeWidth="1.4" />
-      <path d="M 178 90 v 8 M 174 94 h 8" stroke={BAD} strokeWidth="1.4" />
-    </g>
-    <Callout x={110} y={46} r={16} />
-    <Lbl x={150} y={28} tone={BAD}>hits off-pad</Lbl>
-    <Lbl x={150} y={122} tone={BAD} size={7.5}>or missing entirely</Lbl>
+  <Mini caption="DRILL MATCHES PADS">
+    <ThPad x={46} y={48} />
+    <ThPad x={46} y={90} />
+    <ThPad x={106} y={48} />
+    <ThPad x={106} y={90} />
+    <circle cx={106} cy={48} r="3.2" fill="none" stroke={BAD} strokeWidth="1.3" />
+    <path d="M 94 34 v 9 M 90 38 h 9" stroke={BAD} strokeWidth="1.3" />
+    <circle cx={158} cy={70} r="3.2" fill="none" stroke={BAD} strokeWidth="1.3" />
+    <path d="M 158 60 v 8 M 154 64 h 8" stroke={BAD} strokeWidth="1.3" />
+    <Callout x={106} y={48} r={15} />
+    <Lbl x={160} y={34} tone={BAD} size={7.5} anchor="end">hits off-pad</Lbl>
+    <Lbl x={160} y={118} tone={BAD} size={7.5} anchor="end">or missing entirely</Lbl>
   </Mini>
 );
-
-/* --------------------------- senior review batch --------------------------- */
-
-function CapG({ x, y }: { x: number; y: number }) {
-  return (
-    <g stroke={CU} fill="none">
-      <path d={`M ${x} ${y - 9} V ${y - 2.6} M ${x} ${y + 2.6} V ${y + 9}`} strokeWidth="2.2" />
-      <path d={`M ${x - 6.5} ${y - 2.6} H ${x + 6.5} M ${x - 6.5} ${y + 2.6} H ${x + 6.5}`} strokeWidth="2.8" />
-    </g>
-  );
-}
-
-/** series cap on a horizontal trace (vertical plates) */
-function CapGV({ x, y }: { x: number; y: number }) {
-  return (
-    <g stroke={CU} fill="none">
-      <path d={`M ${x - 9} ${y} H ${x - 2.6} M ${x + 2.6} ${y} H ${x + 9}`} strokeWidth="2.2" />
-      <path d={`M ${x - 2.6} ${y - 6.5} V ${y + 6.5} M ${x + 2.6} ${y - 6.5} V ${y + 6.5}`} strokeWidth="2.8" />
-    </g>
-  );
-}
-
-const Decap = () => (
-  <Mini caption="ONE PIN — ONE CAP">
-    <rect x="22" y="22" width="46" height="88" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={45} y={70} tone={SILK} size={11}>MCU</Lbl>
-    {[36, 66, 96].map((y) => (
-      <g key={y}>
-        <path d={`M 68 ${y} H 104`} stroke={CU} strokeWidth="4" />
-        <CapG x={104} y={y} />
-        <path d={`M 104 ${y + 9} V ${y + 17}`} stroke={CU} strokeWidth="2.2" />
-        <circle cx={104} cy={y + 20} r="4" fill={GOLD} />
-        <circle cx={104} cy={y + 20} r="1.6" fill="#0d281e" />
-      </g>
-    ))}
-    <Lbl x={160} y={30} tone={GOOD} size={7.5}>100 nF each</Lbl>
-    <Hatch x={84} y={44} w={120} h={76} tone="#2b6a50" />
-    <Lbl x={167} y={74} tone="#7fd6b4" size={7.5}>3.3 ZONE</Lbl>
-    <Lbl x={167} y={86} tone="#7fd6b4" size={7.5}>BACK LAYER</Lbl>
-  </Mini>
-);
-
-const DecapBunch = () => (
-  <Mini caption="SHARED CAP = COUPLED NOISE">
-    <rect x="22" y="26" width="42" height="80" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={43} y={70} tone={SILK} size={10}>MCU</Lbl>
-    {[40, 66, 92].map((y) => (
-      <path key={y} d={`M 64 ${y} H 92`} stroke={CU} strokeWidth="4" />
-    ))}
-    <path d="M 92 40 V 92" stroke={CU} strokeWidth="4" fill="none" />
-    <path d="M 92 66 H 140 V 76" stroke={CU} strokeWidth="4" fill="none" />
-    <CapG x={140} y={85} />
-    <path d="M 140 94 V 104" stroke={CU} strokeWidth="2.2" />
-    <circle cx={140} cy={108} r="4" fill={GOLD} />
-    <circle cx={140} cy={108} r="1.6" fill="#0d281e" />
-    <Callout x={116} y={66} r={30} />
-    <Lbl x={172} y={30} tone={BAD} size={7.5}>one cap feeds</Lbl>
-    <Lbl x={172} y={42} tone={BAD} size={7.5}>three pins</Lbl>
-    <Lbl x={104} y={117} tone={BAD} size={7.5}>all return currents share the bunch</Lbl>
-  </Mini>
-);
-
-const ThermalVias = () => (
-  <Mini caption="TAB → VIAS → GND COPPER">
-    <rect x="70" y="16" width="80" height="30" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={110} y={35} tone={SILK} size={9.5}>REGULATOR</Lbl>
-    <rect x="90" y="46" width="40" height="34" fill={GOLD} stroke="#b98d54" strokeWidth="1.2" />
-    {[98, 110, 122].map((x) =>
-      [54, 66, 74].map((y) => (
-        <g key={`${x}${y}`}>
-          <circle cx={x} cy={y} r="3.2" fill="#0d281e" stroke="#8a6a3c" strokeWidth="1.4" />
-        </g>
-      ))
-    )}
-    <path d="M 98 84 V 94 M 110 84 V 94 M 122 84 V 94" stroke={DIM} strokeWidth="1.4" strokeDasharray="3 2.5" />
-    <Hatch x={30} y={94} w={160} h={24} tone="#2b6a50" />
-    <Lbl x={110} y={110} tone="#7fd6b4" size={8}>GND COPPER SPREADS THE HEAT</Lbl>
-    <Mark x={196} y={30} ok />
-  </Mini>
-);
-
-const RailZone = () => (
-  <Mini caption="RAILS LEAVE ON COPPER">
-    <rect x="16" y="40" width="46" height="42" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={39} y={58} tone={SILK} size={8.5}>5V SW</Lbl>
-    <Lbl x={39} y={70} tone={DIM} size={7}>LM1117…</Lbl>
-    <path d="M 62 46 L 128 36 L 180 44 V 70 L 128 78 L 62 68 Z" fill="none" stroke={CU} strokeWidth="1.6" />
-    <Hatch x={64} y={40} w={114} h={34} tone="#8a5a33" gap={6} />
-    <rect x="180" y="44" width="26" height="26" fill="none" stroke={GOLD} strokeWidth="1.6" />
-    <Lbl x={193} y={61} tone={GOLD} size={9}>L1</Lbl>
-    <Lbl x={120} y={100} tone={GOOD}>wide copper straight into the inductor</Lbl>
-    <Mark x={196} y={22} ok />
-  </Mini>
-);
-
-const ThinRail = () => (
-  <Mini caption="RAILS ARE NOT SIGNALS">
-    <rect x="16" y="44" width="46" height="38" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={39} y={60} tone={SILK} size={8.5}>5V SW</Lbl>
-    <Lbl x={39} y={72} tone={DIM} size={7}>3V3 LDO</Lbl>
-    <path d="M 62 60 H 92 q 10 0 12 -9 q 2 -8 12 -8 H 150 q 12 0 14 10 q 2 9 14 9 H 180" fill="none" stroke={CU} strokeWidth="2.4" />
-    <rect x="180" y="48" width="26" height="26" fill="none" stroke={GOLD} strokeWidth="1.6" />
-    <Lbl x={193} y={65} tone={GOLD} size={9}>L1</Lbl>
-    <Callout x={122} y={48} r={26} />
-    <Lbl x={122} y={92} tone={BAD}>signal-width wire on a power rail</Lbl>
-    <Lbl x={122} y={106} tone={BAD} size={7.5}>IR drop + heat + loop inductance</Lbl>
-  </Mini>
-);
-
-const WrongCap = () => (
-  <Mini caption="µF ≠ pF — CHECK THE ORDER">
-    <rect x="24" y="38" width="58" height="42" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={53} y={56} tone={SILK} size={8.5}>REG</Lbl>
-    <Lbl x={53} y={68} tone={DIM} size={7}>3V3 OUT</Lbl>
-    <path d="M 82 58 H 119" stroke={CU} strokeWidth="4" />
-    <CapGV x={128} y={58} />
-    <path d="M 137 58 H 176" stroke={CU} strokeWidth="4" />
-    <Lbl x={184} y={61} tone={DIM} size={7.5}>to load</Lbl>
-    <Callout x={128} y={58} r={22} />
-    <Lbl x={110} y={96} tone={BAD} size={10}>22 pF !</Lbl>
-    <Lbl x={110} y={110} tone={GOOD} size={8}>wanted 22 µF</Lbl>
-    <Lbl x={172} y={96} tone={BAD} size={7.5}>1000× too small —</Lbl>
-    <Lbl x={172} y={108} tone={BAD} size={7.5}>loop has no bulk</Lbl>
-  </Mini>
-);
-
-const CanPair = () => (
-  <Mini caption="MIRROR SYMMETRY">
-    <Lbl x={20} y={16} tone={GOOD} anchor="start" size={7.5}>LENGTHS MATCHED — NOISE CANCELS</Lbl>
-    <path d="M 16 64 H 204" stroke={DIM} strokeWidth="1" strokeDasharray="6 4" opacity="0.8" />
-    <Lbl x={20} y={60} tone={DIM} anchor="start" size={7}>MIRROR AXIS</Lbl>
-    <path d="M 22 44 H 84 L 116 24 H 198" fill="none" stroke={CU} strokeWidth="5" strokeLinejoin="round" />
-    <path d="M 22 84 H 84 L 116 104 H 198" fill="none" stroke={CU} strokeWidth="5" strokeLinejoin="round" />
-    <Lbl x={32} y={38} tone={GOLD} anchor="start" size={8}>CANH</Lbl>
-    <Lbl x={32} y={98} tone={GOLD} anchor="start" size={8}>CANL</Lbl>
-    <path d="M 60 44 l 6 -8 M 60 84 l 6 8" stroke={GOOD} strokeWidth="2" />
-    <path d="M 140 24 l 6 -8 M 140 104 l 6 8" stroke={GOOD} strokeWidth="2" />
-    <path d="M 22 114 H 198" stroke={GOOD} strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
-    <Lbl x={110} y={124} tone={GOOD} size={7}>SAME LENGTH · SAME BENDS · SAME SPACING</Lbl>
-    <Mark x={196} y={56} ok />
-  </Mini>
-);
-
-const CanSplit = () => (
-  <Mini caption="SPLIT PAIR = ANTENNA">
-    <path d="M 22 44 H 96 L 128 24 H 198" fill="none" stroke={CU} strokeWidth="5" strokeLinejoin="round" />
-    <path d="M 22 88 H 60 L 92 108 H 128 L 160 88 H 198" fill="none" stroke={CU} strokeWidth="5" strokeLinejoin="round" />
-    <Lbl x={32} y={38} tone={GOLD} anchor="start" size={8}>CANH</Lbl>
-    <Lbl x={32} y={102} tone={GOLD} anchor="start" size={8}>CANL</Lbl>
-    <path d="M 178 24 V 88" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
-    <Callout x={178} y={56} r={17} />
-    <Lbl x={170} y={60} tone={BAD} anchor="end" size={7.5}>skew</Lbl>
-    <Lbl x={110} y={14} tone={BAD} size={7.5}>arrives at different times</Lbl>
-    <Lbl x={20} y={122} tone={BAD} anchor="start" size={7}>split paths pick up different noise</Lbl>
-    <Mark x={196} y={110} ok={false} />
-  </Mini>
-);
-
-const XtalRing = () => (
-  <Mini caption="GND GUARD RING">
-    <path d="M 22 28 V 74" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={14} y={52} tone={DIM} size={8}>MCU</Lbl>
-    <path d="M 22 40 H 84 M 22 62 H 84" stroke={CU} strokeWidth="3.2" />
-    <rect x="84" y="40" width="52" height="22" fill="#17362a" stroke={GOLD} strokeWidth="1.5" />
-    <Lbl x={110} y={54} tone={GOLD} size={8}>X1</Lbl>
-    {[92, 110, 128].map((x) => (
-      <g key={x}>
-        <circle cx={x} cy={30} r="4.2" fill={GOLD} />
-        <circle cx={x} cy={30} r="1.7" fill="#0d281e" />
-        <circle cx={x} cy={72} r="4.2" fill={GOLD} />
-        <circle cx={x} cy={72} r="1.7" fill="#0d281e" />
-      </g>
-    ))}
-    <rect x="62" y="18" width="96" height="66" fill="none" stroke={GOOD} strokeWidth="1.3" strokeDasharray="4 3" />
-    <Lbl x={110} y={100} tone={GOOD} size={7.5}>vias stitch the ring to the GND plane</Lbl>
-    <Mark x={192} y={50} ok />
-  </Mini>
-);
-
-const CapOrient = () => (
-  <Mini caption="POLARITY — STRIPE TO MARK">
-    <rect x="34" y="30" width="60" height="56" rx="6" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <rect x="76" y="30" width="18" height="56" rx="6" fill="#1f4636" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={85} y={62} tone={SILK} size={10}>−</Lbl>
-    <Lbl x={52} y={62} tone={SILK} size={10}>+</Lbl>
-    <circle cx="152" cy="58" r="26" fill="none" stroke={SILK} strokeWidth="1.4" strokeDasharray="5 4" />
-    <path d="M 152 20 v 10 M 147 25 h 10" stroke={SILK} strokeWidth="1.6" />
-    <Lbl x={152} y={62} tone={SILK} size={10}>+</Lbl>
-    <path d="M 94 58 H 126" stroke={DIM} strokeWidth="1.2" strokeDasharray="3 3" />
-    <Lbl x={110} y={50} tone={DIM} size={7.5}>match</Lbl>
-    <Lbl x={110} y={112} tone={GOOD} size={7.5}>stripe side lands on the marked half</Lbl>
-    <Mark x={196} y={96} ok />
-  </Mini>
-);
-
-const AntiPad = () => (
-  <Mini caption="ANNULAR RING INTACT">
-    <ThPad x={56} y={60} />
-    <circle cx={56} cy={60} r="13" fill="none" stroke={GOOD} strokeWidth="1.4" />
-    <Lbl x={56} y={32} tone={GOOD} size={7.5}>ring ≥ fab min</Lbl>
-    <rect x="128" y="46" width="26" height="28" fill={GOLD} />
-    <circle cx="154" cy="60" r="7" fill="#0d281e" stroke={SILK} strokeWidth="1.3" />
-    <Callout x={150} y={60} r={18} />
-    <Lbl x={120} y={94} tone={BAD} anchor="start" size={7.5}>drill breaks the pad edge</Lbl>
-    <Mark x={56} y={100} ok />
-    <Mark x={166} y={104} ok={false} />
-  </Mini>
-);
-
-const Mount = () => (
-  <Mini caption="MOUNTING HOLES">
-    <circle cx="70" cy="62" r="24" fill="none" stroke={GOOD} strokeWidth="1.4" strokeDasharray="5 3" />
-    <circle cx="70" cy="62" r="12" fill={GOLD} />
-    <circle cx="70" cy="62" r="5.5" fill="#0d281e" stroke={SILK} strokeWidth="1.2" />
-    <Lbl x={70} y={26} tone={GOOD} size={7.5}>copper keep-out ring</Lbl>
-    <circle cx="150" cy="62" r="10" fill="#0d281e" stroke={SILK} strokeWidth="1.3" />
-    <circle cx="150" cy="62" r="19" fill="none" stroke={DIM} strokeWidth="1" strokeDasharray="4 3" />
-    <Lbl x={150} y={26} tone={DIM} size={7.5}>unplated</Lbl>
-    <Lbl x={150} y={96} tone={DIM} size={7.5}>screw head clearance</Lbl>
-    <Mark x={196} y={100} ok />
-  </Mini>
-);
-
-const TestPts = () => {
-  const pts: Array<[number, string]> = [
-    [50, "3V3"],
-    [95, "CANH"],
-    [140, "CANL"],
-    [182, "GND"],
-  ];
-  return (
-    <Mini caption="PROBE POINTS">
-      <path d="M 30 66 H 202" stroke={DIM} strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
-      {pts.map(([x, n]) => (
-        <g key={n}>
-          <circle cx={x} cy={66} r="8" fill={GOLD} />
-          <circle cx={x} cy={66} r="3" fill="#0d281e" />
-          <Lbl x={x} y={48} tone={SILK} size={8}>{n}</Lbl>
-        </g>
-      ))}
-      <Lbl x={110} y={94} tone={GOOD} size={7.5}>1.27 mm grid · labelled · mask opened</Lbl>
-      <Mark x={196} y={26} ok />
-    </Mini>
-  );
-};
-
-const Teardrop = () => (
-  <Mini caption="TEARDROPS AT PADS">
-    <path d="M 74 60 H 198" stroke={CU} strokeWidth="9" />
-    <path d="M 72 50.5 L 72 69.5 L 112 64.5 L 112 55.5 Z" fill={CU} />
-    <ThPad x={66} y={60} />
-    <Callout x={92} y={60} r={27} tone={GOOD} />
-    <ThPad x={168} y={28} />
-    <path d="M 176 28 H 204" stroke={CU} strokeWidth="9" />
-    <Lbl x={160} y={14} tone={BAD} size={7}>no flare — lifts</Lbl>
-    <Lbl x={112} y={102} tone={GOOD} size={7.5}>copper flares out into the pad</Lbl>
-    <Mark x={36} y={100} ok />
-  </Mini>
-);
-
-const Courtyard = () => (
-  <Mini caption="COURTYARD KEPT CLEAR">
-    <Lbl x={110} y={14} tone={DIM} size={7.5}>F.CRTYD</Lbl>
-    <rect x="50" y="20" width="120" height="68" fill="none" stroke={GOOD} strokeWidth="1.2" strokeDasharray="5 3" />
-    <rect x="78" y="34" width="64" height="40" rx="3" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    {[0, 1].map((i) => (
-      <Smd key={`l${i}`} x={58} y={40 + i * 16} w={18} h={10} />
-    ))}
-    {[0, 1].map((i) => (
-      <Smd key={`r${i}`} x={144} y={40 + i * 16} w={18} h={10} />
-    ))}
-    <Lbl x={110} y={104} tone={GOOD} size={7.5}>0.25–0.5 mm of empty space around the body</Lbl>
-    <Mark x={196} y={30} ok />
-  </Mini>
-);
-
-const Fiducials = () => (
-  <Mini caption="FIDUCIALS FOR PICK & PLACE">
-    <rect x="22" y="18" width="176" height="96" fill="none" stroke={DIM} strokeWidth="1.3" />
-    {(
-      [
-        [38, 32],
-        [182, 32],
-        [38, 100],
-      ] as Array<[number, number]>
-    ).map(([x, y]) => (
-      <g key={`${x}-${y}`}>
-        <circle cx={x} cy={y} r="7" fill="none" stroke={GOOD} strokeWidth="1.2" />
-        <circle cx={x} cy={y} r="3.5" fill={GOLD} />
-      </g>
-    ))}
-    <rect x="120" y="62" width="44" height="34" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <circle cx="108" cy="56" r="5" fill="none" stroke={GOOD} strokeWidth="1.1" />
-    <circle cx="108" cy="56" r="2.4" fill={GOLD} />
-    <circle cx="174" cy="102" r="5" fill="none" stroke={GOOD} strokeWidth="1.1" />
-    <circle cx="174" cy="102" r="2.4" fill={GOLD} />
-    <Lbl x={104} y={44} tone={DIM} anchor="end" size={7}>local pair</Lbl>
-    <Lbl x={110} y={10} tone={GOOD} size={7.5}>3 globals, asymmetric — machine finds orientation</Lbl>
-  </Mini>
-);
-
-const StarPoint = () => (
-  <Mini caption="ONE BRIDGE, ONE POINT">
-    <Lbl x={110} y={14} tone={GOOD} size={7.5}>RETURN CURRENTS NEVER CROSS</Lbl>
-    <Hatch x={16} y={20} w={76} h={44} tone="#2b6a50" />
-    <Lbl x={54} y={44} tone="#7fd6b4" size={8}>AGND</Lbl>
-    <Hatch x={16} y={72} w={76} h={40} />
-    <Lbl x={54} y={94} tone="#7fd6b4" size={8}>DGND</Lbl>
-    <rect x="86" y="61" width="20" height="10" fill={CU} />
-    <Callout x={96} y={66} r={18} tone={GOOD} />
-    <rect x="128" y="24" width="52" height="32" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={154} y={44} tone={SILK} size={8}>ADC</Lbl>
-    <rect x="128" y="76" width="52" height="32" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={154} y={96} tone={SILK} size={8}>MOTORS</Lbl>
-    <path d="M 92 42 H 128 M 92 92 H 128" stroke={CU} strokeWidth="3" />
-    <Mark x={196} y={66} ok />
-  </Mini>
-);
-
-const Xtal = () => (
-  <Mini caption="LOAD CAPS — MIRRORED, BEFORE CRYSTAL">
-    <path d="M 22 28 V 104" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={13} y={66} tone={DIM} size={8}>MCU</Lbl>
-    <path d="M 22 46 H 148 V 56 M 22 82 H 176 V 72" fill="none" stroke={CU} strokeWidth="3.4" />
-    <path d="M 100 46 V 52" stroke={CU} strokeWidth="2.2" />
-    <CapG x={100} y={58} />
-    <path d="M 100 61 V 70" stroke={CU} strokeWidth="2.2" />
-    <path d="M 94 70 H 106 M 96 74 H 104 M 98 78 H 102" stroke={DIM} strokeWidth="1.4" />
-    <path d="M 100 82 V 88" stroke={CU} strokeWidth="2.2" />
-    <CapG x={100} y={94} />
-    <path d="M 100 97 V 106" stroke={CU} strokeWidth="2.2" />
-    <path d="M 94 106 H 106 M 96 110 H 104 M 98 114 H 102" stroke={DIM} strokeWidth="1.4" />
-    <rect x="140" y="56" width="44" height="16" fill="#17362a" stroke={GOLD} strokeWidth="1.5" />
-    <Lbl x={162} y={67} tone={GOLD} size={8}>X1 8M</Lbl>
-    <Callout x={100} y={76} r={36} tone={GOOD} />
-    <Lbl x={68} y={30} tone={GOOD}>mirrored caps · equal stubs</Lbl>
-    <Mark x={196} y={100} ok />
-  </Mini>
-);
-
-const ViaKeepout = () => (
-  <Mini caption="VIAS DRILL WHERE THEY LIKE">
-    {[52, 84].map((y) => (
-      <g key={y}>
-        <circle cx={110} cy={y} r="7" fill={GOLD} />
-        <circle cx={110} cy={y} r="2.8" fill="#0d281e" />
-      </g>
-    ))}
-    <Lbl x={110} y={106} tone={DIM} size={7.5}>someone else's via</Lbl>
-    <path d="M 20 26 H 200" stroke={CU} strokeWidth="5" />
-    <Lbl x={20} y={18} tone={GOOD} anchor="start" size={8}>clean route</Lbl>
-    <path d="M 20 68 H 96 M 124 68 H 200" stroke={CU} strokeWidth="5" />
-    <path d="M 96 68 H 124" stroke={BAD} strokeWidth="1.6" strokeDasharray="4 3" />
-    <Callout x={110} y={68} r={18} />
-    <Lbl x={110} y={116} tone={BAD} size={7.5}>tight squeeze = drill roulette</Lbl>
-  </Mini>
-);
-
-const Xh = () => (
-  <Mini caption="LIBRARY FOOTPRINT + 3D BODY">
-    <rect x="48" y="26" width="106" height="38" fill="#1f4636" />
-    <rect x="44" y="30" width="106" height="38" fill="none" stroke={SILK} strokeWidth="1.4" />
-    <rect x="84" y="22" width="26" height="10" fill="none" stroke={SILK} strokeWidth="1.4" />
-    {[58, 84, 110, 136].map((x) => (
-      <ThPad key={x} x={x} y={84} />
-    ))}
-    <Dim x1={58} y1={102} x2={84} y2={102} label="2.54" tone={GOOD} />
-    <Lbl x={210} y={44} tone={GOOD} size={7.5} anchor="end">3D checked</Lbl>
-    <Lbl x={210} y={56} tone={GOOD} size={7.5} anchor="end">before fab</Lbl>
-    <Mark x={196} y={98} ok />
-  </Mini>
-);
-
-const HeaderGap = () => (
-  <Mini caption="SPACE FOR HOUSINGS, NOT PINS">
-    {[28, 38, 48, 58].map((x) => (
-      <circle key={x} cx={x} cy={72} r="4" fill={GOLD} />
-    ))}
-    {[72, 82, 92, 102].map((x) => (
-      <circle key={x} cx={x} cy={72} r="4" fill={GOLD} />
-    ))}
-    <rect x="20" y="44" width="48" height="44" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <rect x="64" y="44" width="48" height="44" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <rect x="64" y="44" width="4" height="44" fill={BAD} opacity="0.5" />
-    <Callout x={66} y={34} r={13} />
-    <Lbl x={66} y={16} tone={BAD}>housings collide</Lbl>
-    {[140, 149, 158, 167].map((x) => (
-      <circle key={x} cx={x} cy={72} r="4" fill={GOLD} />
-    ))}
-    {[184, 193, 202, 211].map((x) => (
-      <circle key={x} cx={x} cy={72} r="4" fill={GOLD} />
-    ))}
-    <rect x="132" y="44" width="42" height="44" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <rect x="178" y="44" width="42" height="44" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={176} y={104} tone={GOOD} size={7.5}>room for plugs</Lbl>
-    <Mark x={199} y={26} ok />
-  </Mini>
-);
-
-const SilkHdr = () => (
-  <Mini caption="FUNCTION FIRST, THEN PIN MAP">
-    <rect x="40" y="42" width="140" height="42" fill="none" stroke={SILK} strokeWidth="1.5" />
-    <Lbl x={110} y={34} tone={SILK} size={12}>UART_GVTR</Lbl>
-    {[56, 84, 112, 140].map((x, i) => (
-      <g key={x}>
-        <ThPad x={x} y={62} />
-        <Lbl x={x} y={76} tone={GOLD} size={10}>{["G", "V", "T", "R"][i]}</Lbl>
-      </g>
-    ))}
-    <Lbl x={110} y={104} tone={GOOD} size={7.5}>left → right: GND · 5V · TX · RX</Lbl>
-    <Mark x={196} y={30} ok />
-  </Mini>
-);
-
-const Datasheet = () => (
-  <Mini caption="CHECK THE DATASHEET FIRST">
-    <rect x="24" y="18" width="74" height="96" rx="3" fill="#0f231b" stroke={DIM} strokeWidth="1.3" />
-    <Lbl x={61} y={34} tone={SILK} size={8}>DATASHEET</Lbl>
-    <path d="M 32 44 H 90 M 32 52 H 90 M 32 60 H 74" stroke={DIM} strokeWidth="1.4" opacity="0.6" />
-    <rect x="34" y="70" width="54" height="34" fill="none" stroke={GOLD} strokeWidth="1.4" />
-    <Lbl x={61} y={91} tone={GOLD} size={7.5}>PKG · PIN 1</Lbl>
-    <circle cx="152" cy="58" r="27" fill="#0f231b" fillOpacity="0.55" stroke={GOOD} strokeWidth="2" />
-    <path d="M 141 58 l 7 8 l 14 -16" fill="none" stroke={GOOD} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M 171 77 L 190 96" stroke={GOOD} strokeWidth="3.4" strokeLinecap="round" />
-    <Lbl x={152} y={104} tone={GOOD} size={7.5}>verify pkg & pinout</Lbl>
-    <Lbl x={110} y={120} tone={DIM} size={7}>before you order a single part</Lbl>
-  </Mini>
-);
-
-const Stub = () => (
-  <Mini caption="NO DEAD-END STUBS">
-    <path d="M 24 62 H 196" stroke={CU} strokeWidth="9" />
-    <path d="M 112 62 V 30 H 162" stroke={CU} strokeWidth="9" fill="none" />
-    <circle cx="162" cy="30" r="5" fill={BAD} />
-    <Callout x={162} y={30} r={20} />
-    <Lbl x={162} y={60} tone={BAD} size={7.5}>goes nowhere</Lbl>
-    <path d="M 58 62 V 90" stroke={CU} strokeWidth="9" />
-    <ThPad x={58} y={98} />
-    <Lbl x={110} y={118} tone={GOOD} size={7.5}>rerouted? delete the old copper</Lbl>
-  </Mini>
-);
-
-const SchFlow = () => (
-  <Mini caption="SIGNALS FLOW LEFT → RIGHT">
-    <path d="M 18 42 H 56" stroke={CU} strokeWidth="4" />
-    <Lbl x={36} y={34} tone={DIM} size={7}>IN</Lbl>
-    <rect x="56" y="28" width="44" height="42" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={78} y={53} tone={SILK} size={8}>AMP</Lbl>
-    <path d="M 100 49 H 136" stroke={CU} strokeWidth="4" />
-    <path d="M 136 49 l -7 -4 v 8 z" fill={CU} />
-    <rect x="136" y="28" width="44" height="42" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={158} y={53} tone={SILK} size={8}>MCU</Lbl>
-    <path d="M 20 94 H 200" stroke={CU} strokeWidth="4" opacity="0.5" />
-    <Lbl x={30} y={88} tone={GOLD} size={7}>3V3 ↓</Lbl>
-    <path d="M 78 70 V 94 M 158 70 V 94" stroke={CU} strokeWidth="2" opacity="0.5" />
-    <Lbl x={110} y={116} tone={GOOD} size={7.5}>signal left→right · power top→down</Lbl>
-  </Mini>
-);
-
-const NetNaming = () => (
-  <Mini caption="ONE RAIL, ONE NAME">
-    <path d="M 24 40 H 196" stroke={CU} strokeWidth="7" />
-    <Lbl x={42} y={30} tone={GOOD} size={9}>3V3</Lbl>
-    <Lbl x={112} y={30} tone={GOOD} size={9}>3V3</Lbl>
-    <Lbl x={172} y={30} tone={GOOD} size={9}>3V3</Lbl>
-    <Mark x={196} y={16} ok />
-    <path d="M 24 86 H 98" stroke={CU} strokeWidth="7" />
-    <Lbl x={42} y={76} tone={SILK} size={9}>3V3</Lbl>
-    <path d="M 122 86 H 196" stroke={CU} strokeWidth="7" opacity="0.4" />
-    <Lbl x={140} y={76} tone={BAD} size={9}>V3P3</Lbl>
-    <Mark x={110} y={86} ok={false} />
-    <Lbl x={110} y={116} tone={BAD} size={7.5}>two names = two nets = broken rail</Lbl>
-  </Mini>
-);
-
-const Decal = () => (
-  <Mini caption="DRAW CAPS AT THEIR PIN">
-    <rect x="24" y="30" width="56" height="72" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={52} y={70} tone={SILK} size={9}>U1</Lbl>
-    <path d="M 80 46 H 102" stroke={CU} strokeWidth="4" />
-    <Lbl x={90} y={40} tone={DIM} size={7}>VDD</Lbl>
-    <CapG x={112} y={46} />
-    <path d="M 120 46 H 130 M 130 40 V 52 M 134 42 V 50 M 138 44 V 48" stroke={DIM} strokeWidth="1.4" />
-    <Callout x={112} y={46} r={23} tone={GOOD} />
-    <Lbl x={112} y={24} tone={GOOD} size={7.5}>hanging off the pin</Lbl>
-    <path d="M 130 46 H 176 V 84" stroke={CU} strokeWidth="2" strokeDasharray="4 3" opacity="0.5" />
-    <CapG x={176} y={94} />
-    <Lbl x={176} y={116} tone={BAD} size={7}>stray in a corner ✕</Lbl>
-  </Mini>
-);
-
-const Erc = () => (
-  <Mini caption="ERC CLEAN BEFORE LAYOUT">
-    <rect x="26" y="18" width="168" height="92" rx="3" fill="#0f231b" stroke={DIM} strokeWidth="1.3" />
-    <Lbl x={40} y={38} tone={SILK} size={9} anchor="start">ERC REPORT</Lbl>
-    <path d="M 40 54 H 180 M 40 68 H 180 M 40 82 H 150" stroke={DIM} strokeWidth="1.4" opacity="0.5" />
-    <path d="M 152 60 l 8 9 l 16 -18" fill="none" stroke={GOOD} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-    <Lbl x={40} y={102} tone={GOOD} size={9} anchor="start">0 ERRORS · 0 WARNINGS</Lbl>
-    <Mark x={196} y={20} ok />
-  </Mini>
-);
-
-/* ---- high-current + professional-convention batch ---- */
-
-const HcPoly = () => (
-  <Mini caption="COPPER AREA CARRIES THE AMPS">
-    <Hatch x={22} y={30} w={120} h={72} />
-    <path d="M 142 66 H 196" stroke={CU} strokeWidth="14" strokeLinecap="round" />
-    <Dim x1={22} y1={16} x2={142} y2={16} label="wide polygon, not a trace" tone={GOOD} />
-    <path d="M 188 58 l 8 8 l -8 8" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Lbl x={82} y={62} tone="#7fd6b4" size={8}>CURRENT</Lbl>
-    <Lbl x={82} y={76} tone="#7fd6b4" size={8}>SPREADS OUT</Lbl>
-    <Lbl x={170} y={92} tone={DIM} size={7}>to load</Lbl>
-  </Mini>
-);
-
-const ViaArray = () => (
-  <Mini caption="VIAS IN PARALLEL SHARE CURRENT">
-    <path d="M 20 66 H 44" stroke={CU} strokeWidth="8" strokeLinecap="round" />
-    {[66, 100, 134].map((x) =>
-      [46, 86].map((y) => (
-        <g key={`${x}-${y}`}>
-          <circle cx={x} cy={y} r="7" fill={GOLD} />
-          <circle cx={x} cy={y} r="2.8" fill="#0d281e" />
-        </g>
-      ))
-    )}
-    <path d="M 156 66 H 196" stroke={CU} strokeWidth="8" strokeLinecap="round" />
-    <path d="M 190 58 l 8 8 l -8 8" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Lbl x={100} y={26} tone={GOOD} size={7.5}>6 vias = 6 current paths</Lbl>
-    <Lbl x={100} y={116} tone={DIM} size={7}>each via carries a share — none bottlenecks</Lbl>
-  </Mini>
-);
-
-const HcLoop = () => (
-  <Mini caption="CURRENT LOOPS STAY TIGHT">
-    <path d="M 24 96 H 40 V 30 H 180 V 96 H 196" fill="none" stroke={CU} strokeWidth="6" strokeLinejoin="round" />
-    <Callout x={110} y={63} r={32} />
-    <Lbl x={110} y={20} tone={BAD} size={7.5}>long detour = inductance + heat</Lbl>
-    <Lbl x={110} y={60} tone={BAD} size={7}>loop area</Lbl>
-    <Lbl x={110} y={72} tone={BAD} size={7}>should be tiny</Lbl>
-    <path d="M 24 88 v 8 M 196 88 v 8" stroke={DIM} strokeWidth="1.4" />
-    <Lbl x={30} y={112} tone={DIM} size={7} anchor="start">source</Lbl>
-    <Lbl x={190} y={112} tone={DIM} size={7} anchor="end">load</Lbl>
-  </Mini>
-);
-
-const GridPlace = () => (
-  <Mini caption="PLACE ON A GRID, THEN ROUTE">
-    <path d="M 46 24 V 108 M 124 24 V 108" stroke={GOOD} strokeWidth="1" strokeDasharray="2 3" opacity="0.5" />
-    <path d="M 20 44 H 200 M 20 84 H 200" stroke={GOOD} strokeWidth="1" strokeDasharray="2 3" opacity="0.5" />
-    <rect x={46} y={44} width={44} height={26} fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <rect x={124} y={44} width={44} height={26} fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <rect x={85} y={84} width={44} height={26} fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={110} y={16} tone={GOOD} size={7.5}>parts snapped to the grid</Lbl>
-  </Mini>
-);
-
-const ReturnSplit = () => (
-  <Mini caption="RETURN CURRENT HATES SPLIT PLANES">
-    <path d="M 24 36 H 196" stroke={CU} strokeWidth="4" />
-    <Hatch x={20} y={62} w={72} h={46} />
-    <Hatch x={128} y={62} w={72} h={46} />
-    <path d="M 186 62 H 140 V 100 H 80 V 62 H 34" fill="none" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
-    <path d="M 34 62 l -5 -4 M 34 62 l 5 -4" stroke={BAD} strokeWidth="1.4" />
-    <Lbl x={110} y={54} tone={BAD} size={7.5}>signal crosses the split</Lbl>
-    <Lbl x={110} y={120} tone={BAD} size={7}>return loops around = antenna</Lbl>
-    <Lbl x={56} y={88} tone="#7fd6b4" size={7}>GND</Lbl>
-    <Lbl x={164} y={88} tone="#7fd6b4" size={7}>GND</Lbl>
-  </Mini>
-);
-
-const ThreeW = () => (
-  <Mini caption="≥ 3× TRACE WIDTH APART">
-    <path d="M 22 36 H 198" stroke={CU} strokeWidth="6" />
-    <path d="M 22 66 H 198" stroke={CU} strokeWidth="6" />
-    <path d="M 22 96 H 198" stroke={CU} strokeWidth="6" />
-    <Dim x1={150} y1={36} x2={150} y2={66} label="3W" tone={GOOD} />
-    <Dim x1={150} y1={66} x2={150} y2={96} label="3W" tone={GOOD} />
-    <Lbl x={40} y={26} tone={DIM} size={7} anchor="start">fast nets, parallel</Lbl>
-    <Lbl x={110} y={116} tone={GOOD} size={7}>coupling drops off fast with spacing</Lbl>
-  </Mini>
-);
-
-const Orient = () => (
-  <Mini caption="EVERY STRIPE THE SAME WAY">
-    {[34, 76, 118, 160].map((x) => (
-      <g key={x}>
-        <rect x={x} y={44} width={26} height={38} rx="3" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-        <rect x={x + 18} y={44} width={6} height={38} fill="#2b6a50" />
-        <path d={`M ${x + 21} 50 v 4 M ${x + 21} 60 v 4`} stroke={SILK} strokeWidth="1.2" />
-      </g>
-    ))}
-    <Lbl x={113} y={32} tone={SILK} size={7.5}>stripe = cathode / minus</Lbl>
-    <path d="M 40 96 H 186" stroke={GOOD} strokeWidth="1.4" />
-    <path d="M 180 90 l 8 6 l -8 6" fill="none" stroke={GOOD} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    <Lbl x={110} y={116} tone={GOOD} size={7}>one backwards part now sticks out</Lbl>
-  </Mini>
-);
-
-const RevSilk = () => (
-  <Mini caption="IDENTIFY EVERY BOARD">
-    <rect x={24} y={26} width={172} height={80} rx="6" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <text x={36} y={58} fontFamily={MONO} fontSize="9" fill={SILK}>ROBO-PWR · REV D</text>
-    <text x={36} y={70} fontFamily={MONO} fontSize="6.5" fill={DIM}>2026-02 · HKUST ROBOTICS</text>
-    <Callout x={86} y={62} r={36} tone={GOOD} />
-    <Lbl x={160} y={48} tone={GOOD} size={7}>read it in the lab,</Lbl>
-    <Lbl x={160} y={60} tone={GOOD} size={7}>not in the CAD</Lbl>
-  </Mini>
-);
-
-const Panel = () => (
-  <Mini caption="PANELS & BREAKAWAYS">
-    <rect x={20} y={30} width={180} height={72} rx="8" fill="none" stroke={SILK} strokeWidth="1.3" />
-    <path d="M 110 30 V 102" stroke={DIM} strokeWidth="1.2" strokeDasharray="5 3" />
-    {[38, 48, 58, 68, 78, 88, 98].map((y) => (
-      <circle key={y} cx={110} cy={y} r="1.8" fill={DIM} />
-    ))}
-    <rect x={28} y={38} width={70} height={56} rx="4" fill="none" stroke={SILK} strokeWidth="1" opacity="0.6" />
-    <rect x={122} y={38} width={70} height={56} rx="4" fill="none" stroke={SILK} strokeWidth="1" opacity="0.6" />
-    <Callout x={28} y={38} r={13} tone={GOOD} />
-    <Lbl x={64} y={20} tone={GOOD} size={7}>rounded corners don't snap</Lbl>
-    <Lbl x={110} y={118} tone={DIM} size={7}>V-score / mouse bites = clean breakout</Lbl>
-  </Mini>
-);
-
-const ReversePol = () => (
-  <Mini caption="REVERSE-POLARITY PROTECTION">
-    <rect x="22" y="44" width="30" height="44" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={37} y={62} tone={SILK} size={8}>BAT</Lbl>
-    <Lbl x={37} y={74} tone={DIM} size={7}>+ / −</Lbl>
-    <path d="M 52 58 H 76" stroke={CU} strokeWidth="4" />
-    <path d="M 52 74 H 76" stroke={CU} strokeWidth="4" />
-    {/* P-FET: gate left, source top, drain bottom */}
-    <path d="M 84 50 V 82" stroke={SILK} strokeWidth="2" />
-    <path d="M 90 52 V 60 M 90 62 V 70 M 90 72 V 80" stroke={SILK} strokeWidth="2.4" />
-    <path d="M 90 56 H 104 V 58" stroke={SILK} strokeWidth="1.6" />
-    <path d="M 90 76 H 104 V 74" stroke={SILK} strokeWidth="1.6" />
-    <path d="M 97 56 l 7 0 -3.5 -5 z" fill={SILK} />
-    <path d="M 76 66 H 84" stroke={CU} strokeWidth="1.6" />
-    <path d="M 104 66 H 128" stroke={CU} strokeWidth="4" />
-    <Lbl x={116} y={50} tone={GOLD} size={8}>Q1 P-FET</Lbl>
-    <Callout x={92} y={66} r={26} tone={GOOD} />
-    <Lbl x={160} y={42} tone={GOOD} size={7.5}>backwards battery</Lbl>
-    <Lbl x={160} y={54} tone={GOOD} size={7.5}>= FET stays off</Lbl>
-    <Mark x={192} y={96} ok />
-  </Mini>
-);
-
-const PolyFuse = () => (
-  <Mini caption="FUSE THE BATTERY FEED">
-    <rect x="22" y="46" width="30" height="40" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={37} y={70} tone={SILK} size={8}>BAT</Lbl>
-    <path d="M 52 66 H 78" stroke={CU} strokeWidth="4" />
-    {/* fuse: rectangle with line through */}
-    <rect x="78" y="59" width="34" height="14" rx="2" fill="none" stroke={GOLD} strokeWidth="1.6" />
-    <path d="M 78 66 H 112" stroke={GOLD} strokeWidth="1.6" />
-    <path d="M 112 66 H 150" stroke={CU} strokeWidth="4" />
-    <path d="M 150 66 v 8 m 0 0 l -5 -6 m 5 6 l 5 -6" stroke={DIM} strokeWidth="1.4" fill="none" />
-    <Lbl x={95} y={52} tone={GOLD} size={8}>F1</Lbl>
-    <Callout x={95} y={66} r={26} tone={GOOD} />
-    <Lbl x={164} y={44} tone={GOOD} size={7.5}>short circuit →</Lbl>
-    <Lbl x={164} y={56} tone={GOOD} size={7.5}>fuse opens, board lives</Lbl>
-    <Mark x={192} y={98} ok />
-  </Mini>
-);
-
-const Esd = () => (
-  <Mini caption="ESD DIODES AT THE CONNECTOR">
-    <rect x="24" y="34" width="26" height="64" fill="none" stroke={SILK} strokeWidth="1.4" />
-    {[46, 66, 86].map((y) => (
-      <circle key={y} cx={37} cy={y} r="4" fill={GOLD} />
-    ))}
-    <path d="M 50 66 H 90" stroke={CU} strokeWidth="3.4" />
-    {/* diode pair to rails */}
-    <path d="M 90 66 V 50 M 90 66 V 82" stroke={CU} strokeWidth="1.8" />
-    <path d="M 84 50 h 12 l -6 -8 z" fill={GOOD} />
-    <path d="M 84 82 h 12 l -6 8 z" fill={GOOD} />
-    <path d="M 84 42 H 96 M 84 90 H 96" stroke={GOOD} strokeWidth="1.6" />
-    <path d="M 90 66 H 130" stroke={CU} strokeWidth="3.4" />
-    <path d="M 96 42 H 130 M 96 90 H 130" stroke={DIM} strokeWidth="1.2" strokeDasharray="3 3" />
-    <Lbl x={138} y={45} tone={DIM} size={7}>3V3</Lbl>
-    <Lbl x={138} y={93} tone={DIM} size={7}>GND</Lbl>
-    <Lbl x={138} y={69} tone={GOLD} size={7}>to MCU</Lbl>
-    <Callout x={90} y={66} r={28} tone={GOOD} />
-    <Lbl x={110} y={20} tone={GOOD}>spark clamps to the rails, not the pin</Lbl>
-    <Mark x={196} y={66} ok />
-  </Mini>
-);
-
-const SeriesRes = () => (
-  <Mini caption="SERIES R AT THE CONNECTOR">
-    <rect x="24" y="46" width="26" height="40" fill="none" stroke={SILK} strokeWidth="1.4" />
-    <circle cx={37} cy={66} r="4" fill={GOLD} />
-    <path d="M 50 66 H 78" stroke={CU} strokeWidth="3.4" />
-    {/* resistor zigzag */}
-    <path d="M 78 66 l 6 -8 l 8 16 l 8 -16 l 8 16 l 6 -8" fill="none" stroke={GOLD} strokeWidth="2" strokeLinejoin="round" />
-    <path d="M 114 66 H 150" stroke={CU} strokeWidth="3.4" />
-    <Lbl x={96} y={48} tone={GOLD} size={8}>33–100 Ω</Lbl>
-    <Callout x={96} y={66} r={30} tone={GOOD} />
-    <Lbl x={158} y={52} tone={GOOD} size={7.5}>slows a spike,</Lbl>
-    <Lbl x={158} y={64} tone={GOOD} size={7.5}>damps ringing</Lbl>
-    <Lbl x={158} y={88} tone={DIM} size={7}>signal never notices</Lbl>
-    <Mark x={196} y={98} ok />
-  </Mini>
-);
-
-const UnusedPins = () => (
-  <Mini caption="DEFINE EVERY PIN">
-    <rect x="66" y="26" width="88" height="80" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={110} y={42} tone={SILK} size={9}>MCU</Lbl>
-    {/* open-drain with pull-up */}
-    <path d="M 40 52 H 66" stroke={CU} strokeWidth="3" />
-    <path d="M 40 52 V 40" stroke={CU} strokeWidth="1.8" />
-    <path d="M 34 40 h 12 l -6 -8 z" fill={GOOD} />
-    <path d="M 34 32 H 46" stroke={GOOD} strokeWidth="1.6" />
-    <Lbl x={26} y={56} tone={GOLD} size={7}>OD</Lbl>
-    {/* unused input tied to GND */}
-    <path d="M 154 52 H 180" stroke={CU} strokeWidth="3" />
-    <path d="M 180 52 V 62" stroke={CU} strokeWidth="1.8" />
-    <path d="M 174 62 h 12 M 176 66 h 8 M 178 70 h 4" stroke={GOOD} strokeWidth="1.6" />
-    <Lbl x={188} y={48} tone={GOLD} size={7}>tied</Lbl>
-    {/* floating input (bad, struck) */}
-    <path d="M 154 82 H 180" stroke={CU} strokeWidth="3" opacity="0.35" />
-    <path d="M 174 76 l 12 12 M 186 76 l -12 12" stroke={BAD} strokeWidth="2" />
-    <Lbl x={180} y={104} tone={BAD} size={7}>never float</Lbl>
-    <Lbl x={110} y={120} tone={GOOD} size={7}>pull-ups on open-drain · tie unused inputs</Lbl>
-    <Mark x={34} y={96} ok />
-  </Mini>
-);
-
-const StdParts = () => (
-  <Mini caption="STANDARD FOOTPRINTS">
-    {/* 0402 */}
-    <Smd x={40} y={34} w={10} h={12} />
-    <Smd x={62} y={34} w={10} h={12} />
-    <rect x={50} y={36} width={12} height={8} fill="#1f4636" />
-    <Lbl x={56} y={26} tone={GOLD} size={8}>0402</Lbl>
-    {/* 0603 */}
-    <Smd x={120} y={32} w={12} h={16} />
-    <Smd x={150} y={32} w={12} h={16} />
-    <rect x={132} y={35} width={18} height={10} fill="#1f4636" />
-    <Lbl x={141} y={24} tone={GOLD} size={8}>0603</Lbl>
-    {/* QFP */}
-    <rect x="70" y="70" width="80" height="44" fill="none" stroke={SILK} strokeWidth="1.2" />
-    {[0, 1, 2, 3, 4].map((i) => (
-      <g key={i}>
-        <Smd x={76 + i * 15} y={62} w={8} h={8} />
-        <Smd x={76 + i * 15} y={114} w={8} h={8} />
-      </g>
-    ))}
-    <Lbl x={110} y={96} tone={SILK} size={8}>QFP · in the assembler's library</Lbl>
-    <Lbl x={110} y={126} tone={GOOD} size={7}>approved parts list = no surprises at the fab</Lbl>
-    <Mark x={196} y={40} ok />
-  </Mini>
-);
-
-const RfKeepout = () => (
-  <Mini caption="RF KEEPOUT UNDER THE ANTENNA">
-    {/* antenna */}
-    <path d="M 40 30 q 30 -14 60 0 q -30 14 -60 0" fill="none" stroke={GOLD} strokeWidth="2.4" />
-    <Lbl x={70} y={52} tone={GOLD} size={8}>ANT</Lbl>
-    {/* hatched keepout under it */}
-    <Hatch x={34} y={62} w={76} h={52} tone="#8a3a30" gap={6} />
-    <Lbl x={72} y={92} tone="#f2a89e" size={7.5}>no copper · no ground</Lbl>
-    {/* a stray trace crossing (bad) */}
-    <path d="M 130 88 H 190" stroke={CU} strokeWidth="3" opacity="0.4" />
-    <path d="M 152 80 l 12 14 M 164 80 l -12 14" stroke={BAD} strokeWidth="2" />
-    <Lbl x={160} y={74} tone={BAD} size={7}>don't run copper under it</Lbl>
-    <Callout x={72} y={88} r={34} tone={GOOD} />
-    <Mark x={192} y={36} ok />
-  </Mini>
-);
-
-const MechLayer = () => (
-  <Mini caption="EDGE CUTS ON ITS OWN LAYER">
-    {[
-      ["GTL copper", "#e0955a"], ["GBL copper", "#c77f45"], ["GTS mask", "#2b6a50"], ["Edge.Cuts", "#f0cd8d"],
-    ].map(([t, c], i) => (
-      <g key={t}>
-        <rect x={34 + i * 7} y={80 - i * 15} width={110} height={24} rx="3" fill="#0f231b" stroke={c as string} strokeWidth="1.4" />
-        <text x={44 + i * 7} y={96 - i * 15} fontFamily={MONO} fontSize="8.5" fill={c as string}>{t}</text>
-      </g>
-    ))}
-    <Callout x={62} y={38} r={26} tone={GOOD} />
-    <Lbl x={110} y={20} tone={GOOD}>the fab reads the edge from here</Lbl>
-    <Lbl x={110} y={122} tone={DIM} size={7}>never draw the outline into copper or silk</Lbl>
-    <Mark x={196} y={60} ok />
-  </Mini>
-);
-
-/* ------------------------------ convention batch G ------------------------------ */
-
-const Keyed = () => (
-  <Mini caption="KEYED = PLUGS IN ONE WAY ONLY">
-    {/* header on board */}
-    <rect x="30" y="30" width="26" height="72" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    {[44, 62, 80, 98].map((y) => (
-      <ThPad key={y} x={43} y={y} />
-    ))}
-    <rect x="52" y="58" width="8" height="16" fill={SILK} opacity="0.9" />
-    <Lbl x={43} y={22} tone={SILK} size={8}>HDR</Lbl>
-    {/* plug, aligned */}
-    <rect x="96" y="38" width="34" height="56" rx="3" fill="#0f231b" stroke={GOLD} strokeWidth="1.6" />
-    <rect x="92" y="58" width="8" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.6" />
-    <path d="M 78 66 H 88 M 85 62 L 89 66 L 85 70" stroke={GOOD} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    <Lbl x={113} y={112} tone={GOOD} size={7.5}>key matches slot</Lbl>
-    {/* plug, flipped — won't fit */}
-    <rect x="158" y="38" width="34" height="56" rx="3" fill="#0f231b" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
-    <rect x="188" y="58" width="8" height="16" fill="#0f231b" stroke={BAD} strokeWidth="1.4" strokeDasharray="4 3" />
-    <path d="M 146 66 H 154 M 151 62 L 155 66 L 151 70" stroke={BAD} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M 168 60 L 182 74 M 182 60 L 168 74" stroke={BAD} strokeWidth="2.2" strokeLinecap="round" />
-    <Lbl x={175} y={112} tone={BAD} size={7.5}>flipped: won't fit</Lbl>
-    <Callout x={56} y={66} r={20} tone={GOOD} />
-  </Mini>
-);
-
-const UsbPair = () => (
-  <Mini caption="USB = MATCHED DIFFERENTIAL PAIR">
-    <path d="M 22 52 H 198" stroke={CU} strokeWidth="5" />
-    <path d="M 22 78 H 198" stroke={CU} strokeWidth="5" />
-    <path d="M 22 65 H 198" stroke={DIM} strokeWidth="1" strokeDasharray="4 4" opacity="0.7" />
-    {/* mirror ticks */}
-    {[50, 90, 130, 170].map((x) => (
-      <g key={x}>
-        <path d={`M ${x} 45 V 49`} stroke={GOOD} strokeWidth="1.6" />
-        <path d={`M ${x} 81 V 85`} stroke={GOOD} strokeWidth="1.6" />
-      </g>
-    ))}
-    <Lbl x={32} y={42} tone={GOLD} size={8} anchor="start">D+</Lbl>
-    <Lbl x={32} y={96} tone={GOLD} size={8} anchor="start">D−</Lbl>
-    <Lbl x={110} y={30} tone={GOOD} size={8}>same length · same bends · 90 Ω</Lbl>
-    <Lbl x={110} y={112} tone={DIM} size={7}>no stubs, no layer hops mid-pair</Lbl>
-    <Callout x={110} y={65} r={30} tone={GOOD} />
-  </Mini>
-);
-
-const RouteOrder = () => (
-  <Mini caption="ROUTE THE IMPORTANT STUFF FIRST">
-    {/* lane 1: power */}
-    <rect x="52" y="26" width="140" height="16" fill={CU} opacity="0.95" />
-    <rect x="24" y="26" width="20" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.2" />
-    <Lbl x={34} y={37} tone={GOLD} size={8}>1</Lbl>
-    <Lbl x={196} y={37} tone={GOLD} size={7} anchor="end">power rails</Lbl>
-    {/* lane 2: high-speed */}
-    <path d="M 52 60 H 192" stroke={CU} strokeWidth="4" />
-    <path d="M 52 70 H 192" stroke={CU} strokeWidth="4" />
-    <rect x="24" y="58" width="20" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.2" />
-    <Lbl x={34} y={69} tone={GOLD} size={8}>2</Lbl>
-    <Lbl x={196} y={69} tone={GOLD} size={7} anchor="end">CAN / USB</Lbl>
-    {/* lane 3: signals */}
-    <path d="M 52 96 H 192" stroke={CU} strokeWidth="2" opacity="0.7" />
-    <rect x="24" y="90" width="20" height="16" fill="#0f231b" stroke={GOLD} strokeWidth="1.2" />
-    <Lbl x={34} y={101} tone={GOLD} size={8}>3</Lbl>
-    <Lbl x={196} y={101} tone={GOLD} size={7} anchor="end">everything else</Lbl>
-    <Lbl x={110} y={122} tone={DIM} size={7}>the leftovers always find a way — the rails won't</Lbl>
-  </Mini>
-);
-
-const EdgePlace = () => (
-  <Mini caption="CONNECTORS AT THE EDGE">
-    <rect x="16" y="20" width="188" height="92" rx="6" fill="none" stroke={SILK} strokeWidth="1.4" />
-    {/* connector pads at right edge */}
-    {[40, 56, 72, 88].map((y) => (
-      <Smd key={y} x={186} y={y - 5} w={14} h={10} />
-    ))}
-    <path d="M 216 66 H 204 M 208 62 L 204 66 L 208 70" stroke={GOOD} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    <Lbl x={160} y={32} tone={GOOD} size={7} anchor="end">cables reach</Lbl>
-    {/* tall part kept back from edge */}
-    <rect x="48" y="44" width="52" height="44" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={74} y={70} tone={SILK} size={8}>tall part</Lbl>
-    <Hatch x={22} y={26} w={14} h={80} tone="#2b6a50" gap={6} />
-    <Lbl x={56} y={104} tone={DIM} size={7} anchor="start">kept off the edge</Lbl>
-    <Callout x={193} y={66} r={22} tone={GOOD} />
-  </Mini>
-);
-
-const IcDecap = () => (
-  <Mini caption="EVERY IC GETS ITS OWN CAPS">
-    <rect x="62" y="34" width="66" height="64" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    <Lbl x={95} y={64} tone={SILK} size={9}>DRIVER</Lbl>
-    <Lbl x={95} y={76} tone={DIM} size={6.5}>IC</Lbl>
-    {/* pins */}
-    {[44, 58, 72, 86].map((y) => (
-      <g key={y}>
-        <Smd x={48} y={y - 4} w={14} h={8} />
-        <Smd x={128} y={y - 4} w={14} h={8} />
-      </g>
-    ))}
-    {/* caps at the two VDD pins (top-left, top-right) */}
-    <path d="M 40 44 H 20 V 30 H 30" stroke={CU} strokeWidth="2.4" fill="none" />
-    <CapGV x={38} y={44} />
-    <path d="M 150 44 H 170 V 30 H 160" stroke={CU} strokeWidth="2.4" fill="none" />
-    <CapGV x={152} y={44} />
-    <Lbl x={38} y={22} tone={GOOD} size={6.5}>100 n</Lbl>
-    <Lbl x={152} y={22} tone={GOOD} size={6.5}>100 n</Lbl>
-    <Callout x={38} y={44} r={15} tone={GOOD} />
-    <Callout x={152} y={44} r={15} tone={GOOD} />
-    <Lbl x={110} y={116} tone={DIM} size={7}>not just the MCU — every chip with a power pin</Lbl>
-  </Mini>
-);
-
-const CapLadder = () => (
-  <Mini caption="BULK + CERAMIC TEAM UP">
-    {/* connector */}
-    <rect x="18" y="44" width="22" height="44" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={29} y={68} tone={SILK} size={6.5}>IN</Lbl>
-    {/* bulk electrolytic */}
-    <path d="M 40 66 H 62" stroke={CU} strokeWidth="4" />
-    <circle cx="76" cy="66" r="13" fill="#17362a" stroke={GOLD} strokeWidth="1.6" />
-    <path d="M 70 60 V 72 M 82 60 V 72" stroke={GOLD} strokeWidth="1.4" />
-    <Lbl x={76} y={92} tone={GOLD} size={6.5}>22 µF bulk</Lbl>
-    {/* rail to IC */}
-    <path d="M 89 66 H 150" stroke={CU} strokeWidth="4" />
-    {/* ceramic at IC */}
-    <rect x="150" y="50" width="34" height="32" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
-    <Lbl x={167} y={69} tone={SILK} size={7}>IC</Lbl>
-    <CapG x={140} y={44} />
-    <path d="M 140 52 V 62" stroke={CU} strokeWidth="2.2" />
-    <Lbl x={140} y={30} tone={GOOD} size={6.5}>100 n</Lbl>
-    <Callout x={76} y={66} r={20} tone={GOOD} />
-    <Callout x={140} y={44} r={14} tone={GOOD} />
-    <Lbl x={110} y={116} tone={DIM} size={7}>big tank at the door, quick tank at the pin</Lbl>
-  </Mini>
-);
-
-const SwdHdr = () => (
-  <Mini caption="SWD HEADER = A WAY BACK IN">
-    <rect x="60" y="34" width="100" height="64" rx="4" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
-    {[46, 60, 74, 88].map((y, i) => (
-      <g key={y}>
-        <ThPad x={76} y={y} />
-        <Lbl x={150} y={y + 3} tone={SILK} size={7} anchor="end">
-          {["SWDIO", "SWCLK", "GND", "3V3"][i]}
-        </Lbl>
-      </g>
-    ))}
-    <circle cx="76" cy="46" r="8" fill="none" stroke={GOOD} strokeWidth="1.5" />
-    <Lbl x={92} y={24} tone={GOOD} size={7}>pin 1 marked</Lbl>
-    <Lbl x={110} y={116} tone={DIM} size={7}>labelled + reachable after assembly</Lbl>
-    <Callout x={76} y={66} r={30} tone={GOOD} />
-  </Mini>
-);
-
-const MaskDam = () => (
-  <Mini caption="MASK DAM BETWEEN PADS">
-    {/* two 0402 pads, zoomed */}
-    <Smd x={62} y={50} w={40} h={32} />
-    <Smd x={122} y={50} w={40} h={32} />
-    {/* mask dam bridge over the gap */}
-    <rect x="100" y="44" width="24" height="44" fill="#2b6a50" opacity="0.55" />
-    <rect x="100" y="44" width="24" height="44" fill="none" stroke={GOOD} strokeWidth="1.6" />
-    <Callout x={112} y={66} r={26} tone={GOOD} />
-    <Lbl x={112} y={30} tone={GOOD}>mask covers the gap</Lbl>
-    <Lbl x={112} y={104} tone={DIM} size={7}>solder can't bridge across</Lbl>
-    {/* pads stay exposed only where needed */}
-    <Lbl x={82} y={100} tone={DIM} size={6}>pad</Lbl>
-    <Lbl x={142} y={100} tone={DIM} size={6}>pad</Lbl>
-  </Mini>
-);
-
-/* ------------------------------------------------------------------ */
 
 export const DIAGRAMS: Record<string, () => ReactElement> = {
   corners: Corners,
+  widths: Widths,
   corner90: Corner90,
-  netclass: NetClass,
-  neckdown: Neckdown,
+  viaspace: ViaSpace,
+  stub: Stub,
+  decap: Decap,
   relief: Relief,
-  stitch: Stitch,
-  viapad: ViaInPad,
   flood: Flood,
+  railzone: RailZone,
+  decapbunch: DecapBunch,
+  canpair: CanPair,
+  xtal: Xtal,
+  cansplit: CanSplit,
+  returnsplit: ReturnSplit,
   footprint: Footprint,
-  pin1: Pin1,
-  sketchfp: SketchFp,
   mirror: Mirror,
-  refdes: RefDes,
+  headergap: HeaderGap,
+  mount: Mount,
+  silkhdr: SilkHdr,
   silkpad: SilkPad,
-  nopolarity: NoPolarity,
+  revsilk: RevSilk,
   drc: Drc,
   sliver: Sliver,
   creepage: Creepage,
   gerbers: Gerbers,
   drill: Drill,
-  // senior review batch
-  decap: Decap,
-  decapbunch: DecapBunch,
-  thermalvias: ThermalVias,
-  railzone: RailZone,
-  thinrail: ThinRail,
-  wrongcap: WrongCap,
-  canpair: CanPair,
-  cansplit: CanSplit,
-  xtal: Xtal,
-  xtalring: XtalRing,
-  caporient: CapOrient,
-  antipad: AntiPad,
-  mount: Mount,
-  testpts: TestPts,
-  teardrop: Teardrop,
-  courtyard: Courtyard,
-  fiducials: Fiducials,
-  starpoint: StarPoint,
-  viakeepout: ViaKeepout,
-  xh: Xh,
-  headergap: HeaderGap,
-  silkhdr: SilkHdr,
-  // convention & schematic batch
-  datasheet: Datasheet,
-  stub: Stub,
-  schflow: SchFlow,
-  netnaming: NetNaming,
-  decal: Decal,
-  erc: Erc,
-  // high-current + professional-convention batch
-  hcpoly: HcPoly,
-  viaarray: ViaArray,
-  hcloop: HcLoop,
-  gridplace: GridPlace,
-  returnsplit: ReturnSplit,
-  threew: ThreeW,
-  orient: Orient,
-  revsilk: RevSilk,
-  panel: Panel,
-  reversepol: ReversePol,
-  polyfuse: PolyFuse,
-  esd: Esd,
-  seriesres: SeriesRes,
-  unusedpins: UnusedPins,
-  stdparts: StdParts,
-  rfkeepout: RfKeepout,
-  mechlayer: MechLayer,
-  // convention batch G
-  keyed: Keyed,
-  usbpair: UsbPair,
-  routeorder: RouteOrder,
-  edgeplace: EdgePlace,
-  icdecap: IcDecap,
-  capladder: CapLadder,
-  maskdam: MaskDam,
-  swdhdr: SwdHdr,
 };
-
-export const DIAGRAM_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "corners", label: "45° mitred corners (good)" },
-  { value: "corner90", label: "90° corner / acid trap (bad)" },
-  { value: "netclass", label: "Net class trace widths" },
-  { value: "neckdown", label: "Neck-down trace" },
-  { value: "relief", label: "Thermal relief spokes" },
-  { value: "stitch", label: "Stitched ground pour" },
-  { value: "viapad", label: "Via in / outside SMD pad" },
-  { value: "flood", label: "Pour flooding a pad" },
-  { value: "footprint", label: "IPC footprint + pitch" },
-  { value: "pin1", label: "Pin 1 marking" },
-  { value: "sketchfp", label: "Hand-sketched footprint" },
-  { value: "mirror", label: "Mirrored footprint" },
-  { value: "refdes", label: "Reference designator" },
-  { value: "silkpad", label: "Silkscreen over pads" },
-  { value: "nopolarity", label: "Missing polarity mark" },
-  { value: "drc", label: "DRC clearance check" },
-  { value: "sliver", label: "Copper sliver" },
-  { value: "creepage", label: "Creepage violation" },
-  { value: "gerbers", label: "Gerber layer stack" },
-  { value: "drill", label: "Drill file mismatch" },
-  { value: "decap", label: "Per-pin decoupling caps" },
-  { value: "decapbunch", label: "Shared decoupling cap" },
-  { value: "thermalvias", label: "Regulator thermal vias" },
-  { value: "railzone", label: "Rail on copper zone" },
-  { value: "thinrail", label: "Thin power rail" },
-  { value: "wrongcap", label: "Wrong cap value" },
-  { value: "canpair", label: "CANH/CANL mirror symmetry" },
-  { value: "cansplit", label: "Split / skewed CAN lines" },
-  { value: "xtal", label: "Crystal load cap order" },
-  { value: "xtalring", label: "Crystal GND guard ring" },
-  { value: "viakeepout", label: "Signal via keep-out" },
-  { value: "xh", label: "XH connector + 3D" },
-  { value: "headergap", label: "Header spacing for housings" },
-  { value: "silkhdr", label: "Obvious header legend" },
-  { value: "caporient", label: "Electrolytic cap orientation" },
-  { value: "antipad", label: "Annular ring / hole-in-pad" },
-  { value: "mount", label: "Mounting hole keep-out" },
-  { value: "testpts", label: "Test point grid" },
-  { value: "teardrop", label: "Teardrop at pad entry" },
-  { value: "courtyard", label: "IPC courtyard clearance" },
-  { value: "fiducials", label: "Fiducial placement" },
-  { value: "starpoint", label: "AGND/DGND star bridge" },
-  { value: "datasheet", label: "Datasheet cross-check" },
-  { value: "stub", label: "Dead-end stub removal" },
-  { value: "schflow", label: "Schematic left-to-right flow" },
-  { value: "netnaming", label: "One rail, one net name" },
-  { value: "decal", label: "Decoupling cap at its pin" },
-  { value: "erc", label: "ERC clean report" },
-  { value: "hcpoly", label: "High-current polygon pour" },
-  { value: "viaarray", label: "Via array current sharing" },
-  { value: "hcloop", label: "Tight high-current loop" },
-  { value: "gridplace", label: "Placement on a grid" },
-  { value: "returnsplit", label: "Return path vs plane split" },
-  { value: "threew", label: "3W crosstalk spacing" },
-  { value: "orient", label: "Polarised part orientation" },
-  { value: "revsilk", label: "Rev/date on silkscreen" },
-  { value: "panel", label: "Panel rails & breakaways" },
-  { value: "reversepol", label: "Reverse-polarity protection" },
-  { value: "polyfuse", label: "Fuse on the battery feed" },
-  { value: "esd", label: "ESD diodes at the connector" },
-  { value: "seriesres", label: "Series resistor on external lines" },
-  { value: "unusedpins", label: "Unused pins tied off" },
-  { value: "stdparts", label: "Standard part packages" },
-  { value: "rfkeepout", label: "RF keepout under the antenna" },
-  { value: "mechlayer", label: "Edge cuts on its own layer" },
-  { value: "keyed", label: "Keyed connector (one way)" },
-  { value: "usbpair", label: "USB matched differential pair" },
-  { value: "routeorder", label: "Routing order of operations" },
-  { value: "edgeplace", label: "Connectors at the board edge" },
-  { value: "icdecap", label: "Decoupling every IC" },
-  { value: "capladder", label: "Bulk + ceramic cap ladder" },
-  { value: "maskdam", label: "Solder mask dam between pads" },
-  { value: "swdhdr", label: "SWD debug header" },
-];

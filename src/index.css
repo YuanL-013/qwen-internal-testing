@@ -5,17 +5,17 @@
   --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
 
-  --color-ink: #e9f2ea;
-  --color-dim: #9cb8a7;
-  --color-faint: #67856f;
-  --color-bg: #0a1712;
-  --color-panel: #0f231b;
-  --color-panel2: #132c22;
-  --color-raise: #17362a;
-  --color-edge: #20493a;
-  --color-edgesoft: #183a2d;
-  --color-paneled: #271410;
-  --color-edgered: #4a251f;
+  --color-ink: #eef5ef;
+  --color-dim: #a9c2b2;
+  --color-faint: #71907c;
+  --color-bg: #050f0b;
+  --color-panel: #0a1a13;
+  --color-panel2: #0d211a;
+  --color-raise: #10281e;
+  --color-edge: #183c2e;
+  --color-edgesoft: #122e23;
+  --color-paneled: #1d0f0b;
+  --color-edgered: #3f201a;
   --color-copper: #e0955a;
   --color-copperlt: #f6c489;
   --color-gold: #f0cd8d;
@@ -36,6 +36,7 @@ body {
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
 
@@ -66,20 +67,20 @@ body::after {
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0c1d16;
+  background: #08160f;
 }
 ::-webkit-scrollbar-thumb {
-  background: #20493a;
+  background: #183c2e;
   border-radius: 6px;
-  border: 2px solid #0c1d16;
+  border: 2px solid #08160f;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2f6350;
+  background: #23553f;
 }
 
 /* ---- PCB dot drill grid ---- */
 .dotgrid {
-  background-image: radial-gradient(circle, rgba(86, 195, 178, 0.13) 1px, transparent 1.4px);
+  background-image: radial-gradient(circle, rgba(86, 195, 178, 0.1) 1px, transparent 1.4px);
   background-size: 26px 26px;
 }
 
@@ -119,55 +120,12 @@ body::after {
   animation: blinkled 1.6s ease-in-out infinite;
 }
 
-@keyframes shakex {
-  10%, 90% { transform: translateX(-1px); }
-  20%, 80% { transform: translateX(2px); }
-  30%, 50%, 70% { transform: translateX(-4px); }
-  40%, 60% { transform: translateX(4px); }
-}
-.shake {
-  animation: shakex 0.45s ease both;
-}
-
-@keyframes toastin {
-  from { opacity: 0; transform: translateY(14px) scale(0.97); }
-  to { opacity: 1; transform: none; }
-}
-.toastin {
-  animation: toastin 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes modalin {
-  from { opacity: 0; transform: translateY(18px) scale(0.98); }
-  to { opacity: 1; transform: none; }
-}
-.modalin {
-  animation: modalin 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
 @keyframes fadein {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 .fadein {
   animation: fadein 0.25s ease both;
-}
-
-@keyframes flashline {
-  0% { box-shadow: 0 0 0 2px rgba(224, 149, 90, 0.9); }
-  100% { box-shadow: 0 0 0 2px rgba(224, 149, 90, 0); }
-}
-.flashline {
-  animation: flashline 1.2s ease-out both;
-}
-
-/* dashed "route" divider */
-.routedash {
-  background-image: linear-gradient(90deg, var(--color-edge) 55%, transparent 45%);
-  background-size: 14px 1px;
-  background-repeat: repeat-x;
-  background-position: center;
-  height: 1px;
 }
 
 /* ---- reduced motion ---- */
@@ -182,11 +140,7 @@ body::after {
   }
   .ticker-track,
   .led,
-  .shake,
-  .toastin,
-  .modalin,
-  .fadein,
-  .flashline {
+  .fadein {
     animation: none !important;
   }
   *,
