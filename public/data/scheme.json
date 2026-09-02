@@ -24,8 +24,233 @@
   ],
   "categories": [
     {
-      "id": "cat-trc", "code": "TRC", "name": "Trace Routing",
-      "blurb": "How copper is drawn decides whether the board etches cleanly and carries its current without turning into a heater.",
+      "id": "cat-trc",
+      "code": "TRC",
+      "name": "Trace Routing",
+      "blurb": "How you draw the copper decides whether the board survives the fab and carries its current without cooking itself.",
+      "examples": [
+        {
+          "id": "ex-45",
+          "title": "45° corners everywhere",
+          "verdict": "pass",
+          "description": "Every bend in a trace is a 45° cut or a smooth curve. No trace on the board turns a hard right angle.",
+          "reason": "Sharp corners trap etching chemicals, which eat the copper thin right at the bend. On fast signals they also throw the impedance off. Two 45° bends (or an arc) cost nothing and avoid both.",
+          "tags": ["routing", "geometry"],
+          "diagram": "corners"
+        },
+        {
+          "id": "ex-netclass",
+          "title": "Trace widths from net classes",
+          "verdict": "pass",
+          "description": "Power nets run at 0.5 mm, signals at 0.25 mm — set once in net classes, so the design rule check flags any trace that breaks them.",
+          "reason": "Rules in the checker beat rules in your head. Widths stay consistent across the whole board, and anyone can verify the setup in one place.",
+          "tags": ["routing", "drc"],
+          "diagram": "netclass"
+        },
+        {
+          "id": "ex-teardrop",
+          "title": "Teardrops where traces meet pads",
+          "verdict": "pass",
+          "description": "Every trace flares out into a smooth teardrop before it reaches its pad — no skinny trace walking straight into a big pad.",
+          "reason": "A thin trace meeting a large pad concentrates stress at the junction — that's where copper lifts when you rework a joint or the board flexes. The flare spreads the load over more copper so the connection stays put.",
+          "tags": ["routing", "pads"],
+          "diagram": "teardrop"
+        },
+        {
+          "id": "ex-90",
+          "title": "90° corners on traces",
+          "verdict": "fail",
+          "description": "One or more traces turn a hard right angle.",
+          "reason": "Acid trap: etching fluid pools in the corner and eats the copper thin exactly where the trace bends. On fast signals the corner also adds capacitance and bounces energy back. Two 45° bends fix it for free.",
+          "tags": ["routing", "etching"],
+          "diagram": "corner90"
+        },
+        {
+          "id": "ex-neck",
+          "title": "Traces that neck down",
+          "verdict": "fail",
+          "description": "A trace squeezes thinner than its class width to slip between two pads.",
+          "reason": "The thin part carries the same current as the rest of the net — it becomes a fuse you didn't ask for, heating first and sometimes vanishing during etching. If it won't fit at full width, move the pads.",
+          "tags": ["routing", "current"],
+          "diagram": "neckdown"
+        },
+        {
+          "id": "ex-stub",
+          "title": "Leftover stubs on a net",
+          "verdict": "fail",
+          "description": "A trace branches and one arm goes nowhere — a dead-end stub, usually left behind after a reroute.",
+          "reason": "At speed, an open stub rings and radiates — a little antenna you didn't order. When a net moves, delete the old copper. Don't leave tails.",
+          "tags": ["routing", "cleanup"],
+          "diagram": "stub"
+        },
+        {
+          "id": "ex-gridplace",
+          "title": "Placement first, snapped to a grid",
+          "verdict": "pass",
+          "description": "Every part is placed and signed off before a single trace is routed — parts snapped to a 0.5–1 mm grid, lined up in tidy rows.",
+          "reason": "Routing a bad placement is just decorating a mistake. When parts sit on a grid the short, obvious routes appear by themselves, and the board reads like it was drawn on purpose.",
+          "tags": ["placement", "workflow"],
+          "diagram": "gridplace"
+        },
+        {
+          "id": "ex-routeorder",
+          "title": "Route power first, then the fussy nets, then the rest",
+          "verdict": "pass",
+          "description": "Routing happens in order: power rails and high-current paths first, then CAN/USB/clock, then everything else.",
+          "reason": "The leftovers always find a way around — the rails and the fast nets won't. If you route signals first you'll keep cutting them up to make room for copper that needed to be there all along.",
+          "tags": ["routing", "workflow"],
+          "diagram": "routeorder"
+        }
+      ]
+    },
+    {
+      "id": "cat-pwr",
+      "code": "PWR",
+      "name": "Power & Grounding",
+      "blurb": "Clean power in, heat out, joints that actually solder. This is where boards live or die.",
+      "examples": [
+        {
+          "id": "ex-relief",
+          "title": "Thermal relief on plane pads",
+          "verdict": "pass",
+          "description": "Any pad that connects into a copper plane does it through four spokes — never solid copper.",
+          "reason": "A solid link into a big plane pulls heat away faster than the iron can put it in — hello, cold joints. Spokes keep the connection while letting the pad get hot enough to solder.",
+          "tags": ["soldering", "planes"],
+          "diagram": "relief"
+        },
+        {
+          "id": "ex-stitch",
+          "title": "Ground stitched through vias",
+          "verdict": "pass",
+          "description": "Top and bottom ground pours are tied together with stitching vias — thickly near anywhere a signal swaps layers.",
+          "reason": "Stitching gives return currents a short way home. Short loops mean less noise, and the planes stop ringing against each other at RF.",
+          "tags": ["grounding", "emi"],
+          "diagram": "stitch"
+        },
+  {
+          "id": "polygon-pour",
+          "title": "Use polygon for connecting high current power rail",
+          "verdict": "pass",
+          "description": "Top and bottom ground pours are tied together with stitching vias — thickly near anywhere a signal swaps layers.",
+          "reason": "With a wider polygon pour, the current density is lower, which reduces the voltage drop and heat generation. It also provides a larger area for heat dissipation and improves the overall reliability of the power rail.",
+          "tags": ["planes", "power"],
+          "image": "examples/polygon-pour.png"
+        },
+        {
+          "id": "ex-decap-one",
+          "title": "One decoupling cap per power pin",
+          "verdict": "pass",
+          "description": "Every VDD / VDDA / VBAT pin on the MCU gets its own 100 nF cap with a short path to the pin and to ground. Our usual way: a 3.3 V zone on the back layer, each cap via'd straight down into it.",
+          "reason": "Each pin draws its own bursts of current, and only a cap sitting right next to it can answer fast enough. The back-layer zone keeps the return paths short without eating up the top side.",
+          "tags": ["decoupling", "mcu"],
+          "diagram": "decap"
+        },
+        {
+          "id": "ex-reg-thermal",
+          "title": "Regulators dump heat through vias",
+          "verdict": "pass",
+          "description": "The regulator's tab / exposed pad is stitched with thermal vias down to the ground plane. The plane's copper does the spreading.",
+          "reason": "The tab is the part's main heat exit. Vias into ground copper turn the whole plane into a heatsink — for our loads, that's plenty.",
+          "tags": ["thermal", "regulator"],
+          "diagram": "thermalvias"
+        },
+        {
+          "id": "ex-rail-zone",
+          "title": "Power rails run on copper, not wire",
+          "verdict": "pass",
+          "description": "The 5 V output reaches its inductor through a pour, the LM1117's 3.3 V leaves on a zone, and the 3.3 V rail is zoned or fat — never signal-width. Bulk caps sit next to the load, beside the inductor.",
+          "reason": "Rails carry the whole board's current, so thin wire means lost voltage and heat where you can least afford it. Copper is free — spend it. On the switcher side, fat copper also keeps the noisy loop tight.",
+          "tags": ["power", "zones", "regulator"],
+          "diagram": "railzone"
+        },
+        {
+          "id": "ex-viapad",
+          "title": "Via drilled inside an SMD pad",
+          "verdict": "fail",
+          "description": "A via sits inside an SMD pad, untented and unplugged.",
+          "reason": "During reflow, liquid solder drains down the via and starves the joint — or the lopsided pad flips the part upright (tombstoning). Keep vias outside pads, or use properly filled and plugged via-in-pad.",
+          "tags": ["assembly", "reflow"],
+          "diagram": "viapad"
+        },
+        {
+          "id": "ex-flood",
+          "title": "Copper pour flooding a pad",
+          "verdict": "fail",
+          "description": "A ground pour has crept onto a signal pad with no clearance.",
+          "reason": "That's a short to the plane — sometimes one you only find after assembly, when the board is already full of parts. Every pour obeys the clearance rule on every net. No exceptions.",
+          "tags": ["clearance", "shorts"],
+          "diagram": "flood"
+        },
+        {
+          "id": "ex-decap-shared",
+          "title": "One cap shared across power pins",
+          "verdict": "fail",
+          "description": "A single cap — or a bunch tied together — feeds two or more of the MCU's power pins.",
+          "reason": "The shared cap sits too far from most pins, and its path crosses everyone else's return current — so noise flows through the whole bunch instead of dying at its source. One pin, one cap, short path.",
+          "tags": ["decoupling", "mcu"],
+          "diagram": "decapbunch"
+        },
+        {
+          "id": "ex-icdecap",
+          "title": "Every IC gets its own decoupling",
+          "verdict": "pass",
+          "description": "Not just the MCU — motor drivers, CAN transceivers, sensor ICs, anything with a power pin gets a 100 nF cap right at that pin.",
+          "reason": "Each chip switches its own current and needs its own local reservoir. A driver pulling amps for a motor is exactly the part you don't want borrowing the MCU's cap. One cap per power pin, on every chip.",
+          "tags": ["decoupling", "placement"],
+          "diagram": "icdecap"
+        },
+        {
+          "id": "ex-capladder",
+          "title": "Bulk cap at the entry, ceramic at the pin",
+          "verdict": "pass",
+          "description": "A big electrolytic (10–47 µF) sits near where power comes in, and small ceramics sit at each IC — they work as a team.",
+          "reason": "The bulk cap is the slow, deep tank that soaks up big draws; the ceramic is the quick one that answers in nanoseconds. One without the other leaves a gap. Big at the door, small at the pin.",
+          "tags": ["decoupling", "power"],
+          "diagram": "capladder"
+        },
+        {
+          "id": "ex-rail-thin",
+          "title": "Power rails drawn as thin traces",
+          "verdict": "fail",
+          "description": "A regulator feeding its inductor through a skinny trace, or the 3.3 V rail routed at signal width.",
+          "reason": "Thin copper on a rail means voltage drop and heat under load. On the switcher side it also stretches the loop, which makes ringing worse. If a rail must cross busy territory, pour it on another layer and stitch down — don't thin it out.",
+          "tags": ["power", "width"],
+          "diagram": "thinrail"
+        },
+        {
+          "id": "ex-cap-wrong",
+          "title": "22 pF where the regulator wants 22 µF",
+          "verdict": "fail",
+          "description": "The regulator's bulk cap fitted in the wrong size class — a pF value where µF is needed.",
+          "reason": "A pF cap only filters the very fastest noise; the bulk cap is the energy bucket the load drinks from. With a pF in its place the output sags and the regulator can ring under load. Read µF / nF / pF twice on every part before ordering.",
+          "tags": ["passives", "regulator"],
+          "diagram": "wrongcap"
+        },
+        {
+          "id": "ex-reversepol",
+          "title": "Reverse-polarity protection on the power entry",
+          "verdict": "pass",
+          "description": "Every battery / supply input has a series diode or P-MOSFET so a reversed plug or battery does no damage.",
+          "reason": "Reversed power is the fastest way to kill a board, and it will happen — connectors are small and pits are dark. A single cheap part turns a dead board into a “flip the plug” moment.",
+          "tags": ["power", "protection"],
+          "diagram": "reversepol"
+        },
+        {
+          "id": "ex-polyfuse",
+          "title": "A fuse on the battery feed",
+          "verdict": "pass",
+          "description": "A polyfuse or proper fuse sits in series with the main battery input, sized just above the board's normal draw.",
+          "reason": "Wiring mistakes, a jammed motor, a shorted tool on the bench — all of them pull huge current. The fuse gives up before the trace or the battery connector does, and a polyfuse resets itself after the fault is removed.",
+          "tags": ["power", "protection"],
+          "diagram": "polyfuse"
+        }
+      ]
+    },
+    {
+      "id": "cat-hc",
+      "code": "HC",
+      "name": "High-Current Design",
+      "blurb": "Amps don't care how hard you tried — high-current paths want copper area and short loops, not long skinny traces.",
       "examples": [
         { "id": "ex-45", "title": "45 degree corners everywhere", "verdict": "pass", "description": "Every change of direction is a 45 degree mitre or a smooth arc, no net on the board carries a right angle.", "reason": "Right-angle corners trap etchant during fabrication and become impedance bumps on fast signals. 45 degree corners etch evenly, keep impedance constant and read as intentional work.", "tags": ["routing", "geometry"], "diagram": "corners" },
         { "id": "ex-widths", "title": "Width by rail: 80 / 30 / 20 / 10 mil", "verdict": "pass", "description": "24V runs at about 80 mil, 5V at 30 mil, 3.3V at 20 mil, and signal wires at 10 mil, all set once as net classes.", "reason": "These are the team's working numbers for this board's current budget. Rails too thin sag and heat, signal wires too fat just waste room. When in doubt, go one step wider on power, copper is free.", "tags": ["routing", "current"], "diagram": "widths" },
