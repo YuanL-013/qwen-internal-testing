@@ -485,6 +485,386 @@ const Drill = () => (
   </Mini>
 );
 
+/* ================= deduction-coverage batch (Rev I) ================= */
+
+function CapV({ x, y, tone = CU }: { x: number; y: number; tone?: string }) {
+  return (
+    <g stroke={tone} strokeWidth="2.2" fill="none">
+      <path d={`M ${x} ${y - 8} V ${y - 2.5}`} />
+      <path d={`M ${x - 6} ${y - 2.5} H ${x + 6}`} />
+      <path d={`M ${x - 6} ${y + 2.5} H ${x + 6}`} />
+      <path d={`M ${x} ${y + 2.5} V ${y + 8}`} />
+    </g>
+  );
+}
+
+function Gnd({ x, y, tone = DIM }: { x: number; y: number; tone?: string }) {
+  return (
+    <g stroke={tone} strokeWidth="1.6">
+      <path d={`M ${x - 7} ${y} H ${x + 7}`} />
+      <path d={`M ${x - 4.5} ${y + 3.5} H ${x + 4.5}`} />
+      <path d={`M ${x - 2} ${y + 7} H ${x + 2}`} />
+    </g>
+  );
+}
+
+const Neckdown = () => (
+  <Mini caption="WIDTH MUST HOLD ALONG THE NET">
+    <path d="M 22 64 H 80" stroke={CU} strokeWidth="13" />
+    <path d="M 80 64 H 140" stroke={CU} strokeWidth="3.5" />
+    <path d="M 140 64 H 198" stroke={CU} strokeWidth="13" />
+    <Callout x={110} y={64} r={24} />
+    <Lbl x={110} y={18} tone={BAD}>the skinny part carries the same current</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>it becomes a fuse exactly where you squeezed it</Lbl>
+  </Mini>
+);
+
+const ViaLadder = () => (
+  <Mini caption="MAX 2 VIAS PER SIGNAL TRACE">
+    <path d="M 20 62 H 200" stroke={CU} strokeWidth="4" />
+    {[62, 96, 130, 164].map((x) => (
+      <g key={x}>
+        <circle cx={x} cy={62} r="6.5" fill={GOLD} />
+        <circle cx={x} cy={62} r="2.6" fill="#0d281e" />
+      </g>
+    ))}
+    <Callout x={113} y={62} r={52} />
+    <Lbl x={110} y={18} tone={BAD}>four layer hops on one net</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>every via adds a stub and inductance</Lbl>
+  </Mini>
+);
+
+const ThtPierc = () => (
+  <Mini caption="KEEP TRACES OUT OF PAD FIELDS">
+    {[0, 1, 2, 3, 4].map((i) => (
+      <ThPad key={i} x={50 + i * 30} y={48} />
+    ))}
+    <path d="M 20 48 H 28 M 28 48 Q 65 48 72 66 H 88 Q 95 48 132 48 H 200" stroke={CU} strokeWidth="3.6" fill="none" />
+    <Callout x={80} y={56} r={17} />
+    <Lbl x={110} y={18} tone={BAD}>threading between two through-holes</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>acid traps plus a drill-tolerance short</Lbl>
+  </Mini>
+);
+
+const Stitch = () => (
+  <Mini caption="SOLID GND, BOTH LAYERS, STITCHED">
+    <Hatch x={16} y={30} w={188} h={34} />
+    <Hatch x={16} y={76} w={188} h={32} />
+    {[56, 110, 164].map((x) => (
+      <g key={x}>
+        <path d={`M ${x} 62 V 78`} stroke={DIM} strokeWidth="1.2" strokeDasharray="3 3" />
+        <circle cx={x} cy={70} r="6.5" fill={GOLD} />
+        <circle cx={x} cy={70} r="2.6" fill="#0d281e" />
+      </g>
+    ))}
+    <Lbl x={24} y={44} tone="#7fd6b4" anchor="start">GND top</Lbl>
+    <Lbl x={24} y={96} tone="#7fd6b4" anchor="start">GND bottom</Lbl>
+    <Lbl x={110} y={120} tone={GOOD}>stitching ties the two pours into one plane</Lbl>
+  </Mini>
+);
+
+const ViaArray = () => (
+  <Mini caption="CURRENT CHANGING LAYER: MANY VIAS">
+    <Smd x={34} y={44} w={44} h={44} />
+    {[0, 1, 2].map((r) =>
+      [0, 1, 2].map((c) => (
+        <g key={`${r}${c}`}>
+          <circle cx={132 + c * 20} cy={46 + r * 20} r="6" fill={GOLD} />
+          <circle cx={132 + c * 20} cy={46 + r * 20} r="2.4" fill="#0d281e" />
+        </g>
+      ))
+    )}
+    <path d="M 84 66 H 120" stroke={CU} strokeWidth="9" />
+    <path d="M 116 60 L 124 66 L 116 72 Z" fill={CU} />
+    <Lbl x={110} y={18} tone={GOOD}>one via carries half an amp at best</Lbl>
+    <Lbl x={110} y={120} tone={GOOD}>a grid shares the load, nothing runs hot</Lbl>
+  </Mini>
+);
+
+const Fb = () => (
+  <Mini caption="FEEDBACK TAP AT THE FB PIN">
+    <rect x="26" y="42" width="62" height="46" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={57} y={62} tone={SILK} size={9}>DC-DC</Lbl>
+    <Lbl x={57} y={76} tone={DIM} size={7}>FB</Lbl>
+    <Smd x={88} y={52} w={16} h={10} />
+    <Smd x={88} y={72} w={16} h={10} />
+    <path d="M 104 57 H 128 V 60 M 128 77 H 152 V 74" stroke={CU} strokeWidth="2.6" fill="none" />
+    <Callout x={110} y={67} r={26} tone={GOOD} />
+    <Lbl x={166} y={60} tone={GOLD} size={8} anchor="start">R1 / R2</Lbl>
+    <Lbl x={110} y={120} tone={GOOD}>right at the pin, tapped off the output pad</Lbl>
+  </Mini>
+);
+
+const PowerLoop = () => (
+  <Mini caption="POWER WANTS THE SHORT WAY">
+    <rect x="24" y="52" width="40" height="28" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={44} y={69} tone={SILK} size={8}>REG</Lbl>
+    <rect x="156" y="52" width="40" height="28" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={176} y={69} tone={SILK} size={8}>LOAD</Lbl>
+    <path d="M 64 60 H 84 V 34 H 148 V 60 H 156" stroke={CU} strokeWidth="5" fill="none" />
+    <path d="M 64 72 H 156" stroke={DIM} strokeWidth="1.4" strokeDasharray="5 4" />
+    <Lbl x={110} y={18} tone={BAD}>the scenic route adds R and L for nothing</Lbl>
+    <Lbl x={110} y={120} tone={GOOD}>straight and tight, like the dashed path</Lbl>
+  </Mini>
+);
+
+const SpiderWeb = () => (
+  <Mini caption="POUR A ZONE, DON'T SPIN A WEB">
+    <circle cx={110} cy={64} r="11" fill={GOLD} />
+    <circle cx={110} cy={64} r="4" fill="#0d281e" />
+    {[
+      [40, 36], [110, 30], [180, 36], [40, 92], [110, 98], [180, 92],
+    ].map(([x, y]) => (
+      <g key={`${x}${y}`}>
+        <path d={`M 110 64 L ${x} ${y}`} stroke={CU} strokeWidth="1.6" />
+        <Smd x={x - 8} y={y - 5} w={16} h={10} />
+      </g>
+    ))}
+    <Lbl x={110} y={18} tone={BAD}>six thin spokes where one pour would do</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>long, thin and matched in nothing</Lbl>
+  </Mini>
+);
+
+const WrongCap = () => (
+  <Mini caption="µF AND pF ARE NOT THE SAME PART">
+    <rect x="28" y="44" width="58" height="42" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={57} y={62} tone={SILK} size={9}>REG</Lbl>
+    <Lbl x={57} y={74} tone={DIM} size={7}>OUT</Lbl>
+    <path d="M 86 62 H 119" stroke={CU} strokeWidth="4" />
+    <CapV x={130} y={62} />
+    <path d="M 141 62 H 178" stroke={CU} strokeWidth="4" />
+    <Lbl x={190} y={65} tone={DIM} size={7.5}>load</Lbl>
+    <Callout x={130} y={62} r={20} />
+    <Lbl x={78} y={102} tone={BAD} size={9} anchor="start">fitted: 22 pF</Lbl>
+    <Lbl x={78} y={120} tone={GOOD} size={8} anchor="start">wanted: 22 µF, a thousand times bigger</Lbl>
+  </Mini>
+);
+
+const UnderParts = () => (
+  <Mini caption="NOTHING UNDER, ON ANY LAYER">
+    <rect x="36" y="40" width="52" height="26" rx="3" fill="#17362a" stroke={GOLD} strokeWidth="1.5" />
+    <Lbl x={62} y={57} tone={GOLD} size={8}>X1</Lbl>
+    <Hatch x={30} y={74} w={64} h={22} tone="#8a5a33" />
+    <rect x="132" y="40" width="52" height="30" rx="3" fill="#17362a" stroke={GOLD} strokeWidth="1.5" />
+    <Lbl x={158} y={59} tone={GOLD} size={8}>L1</Lbl>
+    <Hatch x={126} y={78} w={64} h={18} tone="#8a5a33" />
+    <Lbl x={110} y={18} tone={BAD}>copper routed under the crystal and inductor</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>the oscillator hears everything, the inductor radiates</Lbl>
+  </Mini>
+);
+
+const TopSide = () => (
+  <Mini caption="HUMANS PLUG INTO THE TOP">
+    <path d="M 20 96 H 200" stroke={SILK} strokeWidth="1.6" />
+    <Lbl x={26} y={90} tone={DIM} size={7} anchor="start">top copper</Lbl>
+    <Smd x={44} y={80} w={22} h={14} />
+    <Smd x={86} y={80} w={22} h={14} />
+    <Smd x={128} y={80} w={22} h={14} />
+    <path d="M 176 80 v 12 M 170 86 h 12" stroke={GOLD} strokeWidth="2" />
+    <path d="M 110 100 V 108" stroke={DIM} strokeWidth="1.2" strokeDasharray="3 3" />
+    <Lbl x={118} y={107} tone={DIM} size={7} anchor="start">bottom: routing only</Lbl>
+    <Lbl x={55} y={72} tone={GOLD} size={7}>XT60</Lbl>
+    <Lbl x={97} y={72} tone={GOLD} size={7}>XH</Lbl>
+    <Lbl x={133} y={72} tone={GOLD} size={7}>BTN</Lbl>
+    <Lbl x={110} y={18} tone={GOOD}>ports, buttons and LEDs live up here, aligned</Lbl>
+    <Lbl x={110} y={122} tone={GOOD}>nothing to plug into on the back</Lbl>
+  </Mini>
+);
+
+const Inside = () => (
+  <Mini caption="THE OUTLINE IS THE LIMIT">
+    <rect x="150" y="44" width="86" height="40" rx="4" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <path d="M 219 40 V 88" stroke={GOLD} strokeWidth="2" strokeDasharray="5 3" />
+    <Lbl x={158} y={68} tone={SILK} size={8} anchor="start">U7</Lbl>
+    <path d="M 212 34 l 7 7 M 219 34 l -7 7 M 212 85 l 7 7 M 219 85 l -7 7" stroke={BAD} strokeWidth="1.4" />
+    <Lbl x={100} y={18} tone={BAD}>half the part hangs past the edge</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>courtyards stay inside, or the panel route eats them</Lbl>
+  </Mini>
+);
+
+const DisplayClear = () => (
+  <Mini caption="TFT FULLY ABOARD, CLEAR BELOW">
+    <rect x="96" y="32" width="140" height="46" rx="3" fill="#123125" stroke={GOLD} strokeWidth="1.6" />
+    <Lbl x={140} y={58} tone={GOLD} size={9} anchor="start">TFT</Lbl>
+    <path d="M 219 28 V 82" stroke={GOLD} strokeWidth="2" strokeDasharray="5 3" />
+    <Hatch x={120} y={84} w={52} h={18} tone="#8a5a33" />
+    <Callout x={146} y={92} r={24} />
+    <Lbl x={100} y={18} tone={BAD}>screen floats past the edge, a tall part below it</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>overhang cracks, protrusions short</Lbl>
+  </Mini>
+);
+
+const EdgeClear = () => (
+  <Mini caption="COPPER KEEPS OFF THE EDGE">
+    <path d="M 30 40 H 190" stroke={CU} strokeWidth="5" />
+    <path d="M 26 30 H 194" stroke={GOLD} strokeWidth="1.6" strokeDasharray="5 3" />
+    <Lbl x={34} y={56} tone={BAD} size={7.5} anchor="start">0.1 mm</Lbl>
+    <path d="M 30 78 H 190" stroke={CU} strokeWidth="5" />
+    <path d="M 26 60 H 194" stroke={GOLD} strokeWidth="1.6" strokeDasharray="5 3" />
+    <Lbl x={34} y={94} tone={GOOD} size={7.5} anchor="start">0.4 mm</Lbl>
+    <Lbl x={110} y={18} tone={DIM}>board outline is the gold dashes</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>edge copper gets chipped, scored or exposed</Lbl>
+  </Mini>
+);
+
+const MechLayer = () => (
+  <Mini caption="OUTLINE LIVES ON EDGE.CUTS">
+    {[
+      ["F.Cu", "#e0955a", 40], ["Edge.Cuts", "#f0cd8d", 66], ["F.SilkS", "#e9f2ea", 92],
+    ].map(([t, c, y]) => (
+      <g key={t as string}>
+        <rect x={52} y={y as number} width={116} height={20} rx="3" fill="#0f231b" stroke={c as string} strokeWidth="1.4" />
+        <text x={62} y={(y as number) + 14} fontFamily="var(--font-mono)" fontSize="9" fill={c as string}>{t}</text>
+        {t === "Edge.Cuts" && <path d={`M 150 ${(y as number) + 10} h 12`} stroke={c as string} strokeWidth="2" strokeDasharray="4 3" />}
+      </g>
+    ))}
+    <Lbl x={110} y={18} tone={GOOD}>one layer, one job: the board shape</Lbl>
+    <Lbl x={110} y={122} tone={GOOD}>CAM reads the outline from exactly this layer</Lbl>
+  </Mini>
+);
+
+const Erc = () => (
+  <Mini caption="ERC: ZERO ERRORS, ZERO WARNINGS">
+    <rect x="42" y="32" width="136" height="72" rx="3" fill="#0f231b" stroke="#20493a" strokeWidth="1.4" />
+    <Lbl x={110} y={48} tone={SILK} size={9}>ERC REPORT</Lbl>
+    <path d="M 56 62 l 5 5 l 9 -10" stroke={GOOD} strokeWidth="2.2" fill="none" />
+    <Lbl x={78} y={66} tone={GOOD} size={8.5} anchor="start">0 errors</Lbl>
+    <path d="M 56 82 l 5 5 l 9 -10" stroke={GOOD} strokeWidth="2.2" fill="none" />
+    <Lbl x={78} y={86} tone={GOOD} size={8.5} anchor="start">0 warnings</Lbl>
+    <Lbl x={110} y={18} tone={GOOD}>floating pins and dead nets show up here first</Lbl>
+    <Lbl x={110} y={120} tone={GOOD}>run it after every wiring session</Lbl>
+  </Mini>
+);
+
+const NetNaming = () => (
+  <Mini caption="ONE RAIL, ONE CLEAR NAME">
+    <path d="M 24 44 H 120" stroke={CU} strokeWidth="4" />
+    <Lbl x={128} y={47} tone={GOOD} size={8.5} anchor="start">3V3_MCU</Lbl>
+    <path d="M 24 70 H 96" stroke={CU} strokeWidth="4" />
+    <Lbl x={104} y={73} tone={BAD} size={8.5} anchor="start">N$17</Lbl>
+    <path d="M 24 96 H 108" stroke={CU} strokeWidth="4" />
+    <Lbl x={116} y={99} tone={BAD} size={8.5} anchor="start">VCC_1</Lbl>
+    <Lbl x={110} y={18} tone={DIM}>the name should answer: what rail, whose</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>auto-names hide a split rail from the ERC</Lbl>
+  </Mini>
+);
+
+const DivCalc = () => (
+  <Mini caption="DIVIDER SETS THE REAL VOLTAGE">
+    <path d="M 60 34 H 160" stroke={CU} strokeWidth="3.6" />
+    <Lbl x={168} y={37} tone={GOLD} size={8} anchor="start">VOUT</Lbl>
+    <rect x="104" y="40" width="12" height="24" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <Lbl x={94} y={56} tone={SILK} size={8} anchor="end">R1</Lbl>
+    <path d="M 110 64 V 72 H 160" stroke={CU} strokeWidth="2.6" fill="none" />
+    <Lbl x={168} y={75} tone={GOLD} size={8} anchor="start">FB</Lbl>
+    <rect x="104" y="72" width="12" height="24" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <Lbl x={94} y={88} tone={SILK} size={8} anchor="end">R2</Lbl>
+    <path d="M 110 96 V 102" stroke={CU} strokeWidth="2.6" />
+    <Gnd x={110} y={104} />
+    <Lbl x={110} y={18} tone={GOOD}>VOUT = VREF · (1 + R1/R2), computed, not copied</Lbl>
+    <Lbl x={110} y={122} tone={GOOD}>wrong ratio, quietly wrong rail</Lbl>
+  </Mini>
+);
+
+const Unwired = () => (
+  <Mini caption="PLACED IS NOT CONNECTED">
+    <rect x="30" y="40" width="44" height="36" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={52} y={62} tone={SILK} size={9}>U1</Lbl>
+    <path d="M 74 50 H 112 M 74 62 H 100" stroke={CU} strokeWidth="2.6" />
+    <circle cx={112} cy={50} r="2.4" fill="none" stroke={BAD} strokeWidth="1.4" />
+    <circle cx={100} cy={62} r="2.4" fill="none" stroke={BAD} strokeWidth="1.4" />
+    <rect x="140" y="76" width="44" height="28" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={162} y={94} tone={SILK} size={9}>U2</Lbl>
+    <Callout x={162} y={90} r={28} />
+    <Lbl x={110} y={18} tone={BAD}>wires end mid-air, U2 has none at all</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>every pin gets an answer, or the ERC does it for you</Lbl>
+  </Mini>
+);
+
+const WrongSym = () => (
+  <Mini caption="CHECK THE PINOUT BEFORE WIRING">
+    <rect x="84" y="38" width="52" height="52" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={110} y={60} tone={SILK} size={8.5}>Q1</Lbl>
+    <Lbl x={110} y={74} tone={DIM} size={7}>NMOS</Lbl>
+    <path d="M 84 46 H 60 M 84 64 H 60 M 84 82 H 60" stroke={CU} strokeWidth="2.6" />
+    <Lbl x={54} y={49} tone={GOLD} size={8} anchor="end">G</Lbl>
+    <Lbl x={54} y={67} tone={GOLD} size={8} anchor="end">D</Lbl>
+    <Lbl x={54} y={85} tone={GOLD} size={8} anchor="end">S</Lbl>
+    <path d="M 136 46 H 168 M 136 64 H 168 M 136 82 H 168" stroke={CU} strokeWidth="2.6" />
+    <Lbl x={172} y={49} tone={BAD} size={7.5} anchor="start">MOTOR?</Lbl>
+    <Lbl x={172} y={67} tone={BAD} size={7.5} anchor="start">GND?</Lbl>
+    <Lbl x={172} y={85} tone={BAD} size={7.5} anchor="start">24V?</Lbl>
+    <Lbl x={110} y={18} tone={BAD}>symbol pins guessed against the nets</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>datasheet pinout first, wires second</Lbl>
+  </Mini>
+);
+
+const PassiveVal = () => (
+  <Mini caption="EVERY PASSIVE: VALUE AND TYPE">
+    <rect x="40" y="44" width="30" height="18" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <text x="55" y="57" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill={BAD}>R?</text>
+    <path d="M 30 53 H 40 M 70 53 H 80" stroke={CU} strokeWidth="2.4" />
+    <circle cx="122" cy="53" r="13" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <text x="122" y="57" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill={BAD}>C?</text>
+    <path d="M 100 53 H 109 M 135 53 H 146" stroke={CU} strokeWidth="2.4" />
+    <rect x="158" y="42" width="40" height="22" fill="#17362a" stroke={SILK} strokeWidth="1.3" />
+    <text x="178" y="56" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="8" fill={BAD}>10V?</text>
+    <Lbl x={110} y={18} tone={BAD}>missing values, unverified voltage ratings</Lbl>
+    <Lbl x={110} y={120} tone={BAD}>write it down, then check it fits the job</Lbl>
+  </Mini>
+);
+
+const WireThru = () => (
+  <Mini caption="WIRES GO AROUND, BUSES GROUP">
+    <path d="M 30 38 H 190" stroke={GOOD} strokeWidth="3" />
+    {[0, 1, 2].map((i) => (
+      <path key={i} d={`M ${66 + i * 34} 38 V 52`} stroke={GOOD} strokeWidth="2" />
+    ))}
+    <Lbl x={34} y={30} tone={GOOD} size={7.5} anchor="start">bus: D0..D7</Lbl>
+    <rect x="96" y="74" width="52" height="30" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={122} y={93} tone={SILK} size={8}>U3</Lbl>
+    <path d="M 40 89 H 200" stroke={BAD} strokeWidth="2.6" />
+    <Callout x={122} y={89} r={22} />
+    <Lbl x={110} y={18} tone={GOOD}>parallel nets ride one bus, neat entries</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>a wire straight through a symbol hides connections</Lbl>
+  </Mini>
+);
+
+const FuseShort = () => (
+  <Mini caption="FUSE IN SERIES ON THE + FEED">
+    <path d="M 20 38 H 200" stroke={CU} strokeWidth="5" />
+    <Lbl x={26} y={30} tone={GOLD} size={8} anchor="start">24V</Lbl>
+    <path d="M 20 92 H 200" stroke={CU} strokeWidth="5" />
+    <Lbl x={26} y={106} tone={GOLD} size={8} anchor="start">GND</Lbl>
+    <rect x="100" y="46" width="20" height="38" rx="3" fill="#17362a" stroke={SILK} strokeWidth="1.4" />
+    <Lbl x={110} y={70} tone={SILK} size={8}>F1</Lbl>
+    <path d="M 110 43 V 38 M 110 84 V 92" stroke={CU} strokeWidth="2.6" />
+    {[
+      [86, 60], [134, 60], [86, 72], [134, 72],
+    ].map(([x, y]) => (
+      <path key={`${x}${y}`} d={`M ${x} ${y} l -6 -4 M ${x} ${y} l -6 4`} stroke={BAD} strokeWidth="1.6" />
+    ))}
+    <Lbl x={110} y={18} tone={BAD}>fuse bridging the rails, not guarding them</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>first power-on becomes a spark, not a test</Lbl>
+  </Mini>
+);
+
+const ConPol = () => (
+  <Mini caption="XT60: PIN 1 IS + , VERIFY IT">
+    <rect x="42" y="40" width="52" height="48" rx="6" fill="#17362a" stroke={GOLD} strokeWidth="1.6" />
+    <Lbl x={68} y={60} tone={GOLD} size={8}>XT60</Lbl>
+    <Lbl x={56} y={78} tone={BAD} size={8} anchor="start">1: −</Lbl>
+    <path d="M 94 52 H 122 M 94 76 H 122" stroke={CU} strokeWidth="3" />
+    <rect x="122" y="40" width="30" height="48" rx="3" fill="none" stroke={SILK} strokeWidth="1.3" />
+    <path d="M 137 36 V 30 M 131 30 H 143" stroke={SILK} strokeWidth="1.6" />
+    <Lbl x={130} y={56} tone={GOOD} size={9}>+</Lbl>
+    <Lbl x={130} y={78} tone={GOOD} size={9}>−</Lbl>
+    <Lbl x={160} y={56} tone={DIM} size={7} anchor="start">battery</Lbl>
+    <Lbl x={110} y={18} tone={BAD}>wired minus-first, reversed against the pack</Lbl>
+    <Lbl x={110} y={122} tone={BAD}>one swapped label fries everything downstream</Lbl>
+  </Mini>
+);
+
 export const DIAGRAMS: Record<string, () => ReactElement> = {
   corners: Corners,
   widths: Widths,
@@ -512,4 +892,29 @@ export const DIAGRAMS: Record<string, () => ReactElement> = {
   creepage: Creepage,
   gerbers: Gerbers,
   drill: Drill,
+  // deduction-coverage batch (Rev I)
+  neckdown: Neckdown,
+  vialadder: ViaLadder,
+  thtpierc: ThtPierc,
+  stitch: Stitch,
+  viaarray: ViaArray,
+  fb: Fb,
+  powerloop: PowerLoop,
+  spiderweb: SpiderWeb,
+  wrongcap: WrongCap,
+  underparts: UnderParts,
+  topside: TopSide,
+  inside: Inside,
+  displayclear: DisplayClear,
+  edgeclear: EdgeClear,
+  mechlayer: MechLayer,
+  erc: Erc,
+  netnaming: NetNaming,
+  divcalc: DivCalc,
+  unwired: Unwired,
+  wrongsym: WrongSym,
+  passiveval: PassiveVal,
+  wirethru: WireThru,
+  fuseshort: FuseShort,
+  conpol: ConPol,
 };

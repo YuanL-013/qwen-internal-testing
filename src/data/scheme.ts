@@ -13,8 +13,8 @@ export const DEFAULT_SCHEME: Scheme = {
   meta: {
     team: "HKUST Robotics Team",
     doc: "STD-PCB-01",
-    rev: "H1",
-    updated: "2026-03-04",
+    rev: "I",
+    updated: "2026-03-05",
     maintainer: "the Hardware Division",
   },
   spec: [
@@ -45,6 +45,20 @@ export const DEFAULT_SCHEME: Scheme = {
         ex("ex-90", "90 degree corners on traces", "One or more traces turn with a sharp right angle.", "Acid trap: etchant pools inside the corner and over-etchs the copper, thinning the trace exactly where it bends. On fast signals the corner adds capacitance and reflects energy. Use two 45 degree segments or an arc instead.", "fail", { diagram: "corner90", tags: ["routing", "etching"] }),
         ex("ex-viaspace", "Vias aligned, spaced, other side checked", "Use vias to hop layers instead of long detours, placed in neat rows with space between them, after checking the far side isn't already occupied.", "A via landing on a pad, trace or part on the other layer is a hidden short or a broken net. Line them up on-grid, give each one breathing room, and flip the view before you drop them.", "pass", { diagram: "viaspace", tags: ["routing", "vias"] }),
         ex("ex-stub", "Leftover stubs off the main run", "Dead-end copper branches left hanging off a net after a reroute.", "Stubs are antennas: they reflect energy back into fast signals and pick up noise on sensitive ones. After every reroute, delete the old copper, a clean net has exactly one path.", "fail", { diagram: "stub", tags: ["routing", "cleanup"] }),
+        ex("ex-neck", "Width changing along a power net", "A power trace that runs wide, thins down, then widens again somewhere along the net.", "The thin segment carries the same current as the rest of the rail, so it heats first and drops the most voltage. Net classes keep every segment at one width, and the DRC shouts if anything necks down.", "fail", { diagram: "neckdown", tags: ["routing", "current"] }),
+        ex("ex-vialadder", "More than two vias on one trace", "A signal trace hopping layers three or four times on its way across the board.", "Every via is a stub plus a bump of inductance, and on fast signals each hop reflects a little more of the edge back at you. One hop is fine, two is the ceiling, more means the part or the route is in the wrong place.", "fail", { diagram: "vialadder", tags: ["routing", "vias"] }),
+        ex("ex-thtpierc", "Trace threaded between through-hole pads", "A wire squeezed through the gap between two adjacent drilled pads, for example inside an XH header's pad field.", "Drill positions carry tolerance, so a tight pass can breakout and bridge the pads after fab, and the squeezed corner is an acid trap in the making. Route around the pad field, or drop to the other layer before it.", "fail", { diagram: "thtpierc", tags: ["routing", "connectors"] }),
+      ],
+    },
+    {
+      id: "cat-lyt",
+      code: "LYT",
+      name: "Layout Strategy",
+      blurb: "Where things live decides how the board behaves and how humans use it. Plan the floor before you pour or route.",
+      examples: [
+        ex("ex-topside", "Ports, buttons and LEDs on top, aligned", "Everything a human or a cable touches lives on the top layer, grouped along the board edges and aligned with each other. XT60 and XH connectors included, never on the back.", "Back-layer ports mean flipping the board to plug things in, and misaligned connectors look accidental even when the board works. Top side, edges, one tidy line.", "pass", { diagram: "topside", tags: ["placement", "connectors"] }),
+        ex("ex-inside", "Component hanging off the board", "A part placed so its body or courtyard crosses the board outline.", "The outline is where the panel gets routed apart. Anything past it gets chewed, and a part half on the board is a part that won't survive assembly. Courtyards stay fully inside.", "fail", { diagram: "inside", tags: ["placement", "mechanical"] }),
+        ex("ex-displayclear", "Display overhanging or parts poking under it", "The TFT floating past the board edge, or a tall component sitting underneath the display area.", "An overhanging screen has nothing holding it and cracks at the first knock. A part poking up under it shorts or stresses the panel. The display sits fully aboard, and the volume beneath it stays empty.", "fail", { diagram: "displayclear", tags: ["placement", "mechanical"] }),
       ],
     },
     {
@@ -58,6 +72,13 @@ export const DEFAULT_SCHEME: Scheme = {
         ex("ex-flood", "Copper pour floods a pad", "A ground pour creeps onto a signal pad with zero clearance.", "That is a short between the pad and the plane, sometimes only visible after assembly, when the board is already populated. Every pour must respect the board clearance rule against every net, no exceptions.", "fail", { diagram: "flood", tags: ["clearance", "shorts"] }),
         ex("ex-rail-zone", "Regulator outputs leave on copper zones", "The 5V switcher output reaches its inductor through a pour, the LDO's 3.3V leaves on a zone, and the 3.3V rail itself is zoned or fat, never signal width.", "Rails carry the whole board's current, so thin wire drops voltage and burns heat exactly where you can least afford it. Copper is free, spend it. On the switcher side, wide copper also keeps the commutating loop tight and less noisy.", "pass", { diagram: "railzone", tags: ["power", "zones"] }),
         ex("ex-decap-shared", "One decoupling cap shared across power pins", "A single cap, or a bunch wired together, feeds two or more VDD pins of the MCU.", "The shared cap sits too far from most pins, and its path crosses everyone else's return current, so noise flows through the whole bunch instead of dying at its source. One pin, one cap, short path.", "fail", { diagram: "decapbunch", tags: ["decoupling", "mcu"] }),
+        ex("ex-stitch", "Solid ground plane on both layers, stitched", "A ground pour covers both copper layers and the two are tied together with stitching vias, densest near layer changes.", "The spec asks for a solid ground plane, and stitching is what makes two pours behave as one plane. It gives return currents a short path home and stops the layers resonating against each other.", "pass", { diagram: "stitch", tags: ["grounding", "planes"] }),
+        ex("ex-viaarray", "Layer hops on power use via arrays", "Wherever a power net changes layer, it crosses through a grid of vias in parallel, never a single one.", "One via carries roughly half an amp before it heats. A grid splits the current across many barrels so no single via becomes a bottleneck, and the whole stack conducts heat away too.", "pass", { diagram: "viaarray", tags: ["power", "vias"] }),
+        ex("ex-fb", "Feedback divider right at the FB pin", "The DC-DC's feedback resistors sit at the FB pin itself, tapped directly off the output pad, not from somewhere downstream.", "The converter regulates whatever its FB pin sees. Tap after a long trace and it happily holds the wrong end of the wire at 5V while the load sags. Keep the divider short and close.", "pass", { diagram: "fb", tags: ["power", "regulator"] }),
+        ex("ex-powerloop", "Power taking the scenic route", "A power net routed in a long loop around the board when a direct path exists.", "Every extra millimetre of power loop adds resistance you pay for in heat and inductance you pay for in spikes. Power wants the short way, always.", "fail", { diagram: "powerloop", tags: ["power", "routing"] }),
+        ex("ex-spiderweb", "Spider-web power instead of zones", "A star of thin individual traces fanning out from a regulator to every load, where a copper zone would do.", "Thin spokes add up to real resistance and voltage drop, and they all run different lengths. Pour a zone and every load taps the same low-impedance copper.", "fail", { diagram: "spiderweb", tags: ["power", "zones"] }),
+        ex("ex-wrongcap", "Bulk cap in the wrong order of magnitude", "The regulator's output bulk cap fitted as 22 pF where the circuit wants 22 µF, or a similar thousand-fold mix-up.", "A pF part only filters RF, the bulk cap is the energy store the load drinks from between cycles. With pF in its place the rail sags and the loop can oscillate. Read µF, nF and pF twice before ordering.", "fail", { diagram: "wrongcap", tags: ["passives", "regulator"] }),
+        ex("ex-underparts", "Copper under the crystal or inductor", "Traces or pours routed under the crystal or a power inductor, on any layer.", "The crystal is a tuning fork and hears every signal beneath it, which makes start-up flaky. The inductor is the opposite problem, it radiates its switching field into whatever runs under it. Keep both footprints copper-free on every layer.", "fail", { diagram: "underparts", tags: ["clock", "power"] }),
       ],
     },
     {
@@ -70,6 +91,23 @@ export const DEFAULT_SCHEME: Scheme = {
         ex("ex-xtal", "Load caps first, then the crystal", "Both load caps sit between the MCU and the crystal, at the same distance from it, with equal-length stubs to ground.", "The caps have to shunt the crystal pins to ground, any trace past the cap toward the crystal detunes the load capacitance. Placing the two caps as mirror images keeps both sides of the oscillator equally loaded.", "pass", { diagram: "xtal", tags: ["clock", "placement"] }),
         ex("ex-can-split", "CAN lines routed independently", "CANH and CANL sent on separate paths, or one of them crossing a power or switching area alone.", "Whatever couples into one line but not the other arrives as a differential error, the one kind of noise CAN cannot reject. Re-pair them, even loosely, and steer both wires around the noisy copper.", "fail", { diagram: "cansplit", tags: ["can", "noise"] }),
         ex("ex-returnsplit", "Signals crossing a plane split", "A fast net routed straight over a gap or split in the ground plane beneath it.", "Signal current goes out on the trace and comes back directly underneath it, on the plane. When the plane is split there's no path back, so the return detours around the gap, making a big loop that radiates and picks up noise.", "fail", { diagram: "returnsplit", tags: ["grounding", "signal integrity"] }),
+      ],
+    },
+    {
+      id: "cat-sch",
+      code: "SCH",
+      name: "Schematic Hygiene",
+      blurb: "The schematic is where mistakes are still free to fix. A clean sheet reads like a map, and the ERC reads it for you.",
+      examples: [
+        ex("ex-erc", "ERC run clean, errors and warnings", "The electrical rules check passes with zero errors, and every warning has been looked at and explained.", "ERC catches floating pins, shorted outputs and unconnected nets before anyone routes anything. Warnings are usually real problems wearing a costume, so read them all.", "pass", { diagram: "erc", tags: ["erc", "review"] }),
+        ex("ex-netnaming", "Clear net names, one rail one name", "Every rail and signal has a meaningful name, and the same physical rail uses exactly one name everywhere.", "Auto-names like N$17 hide a split rail from both you and the ERC. When 3V3_MCU and VCC_1 are secretly the same net, the board grows a missing connection that no rule check can see.", "pass", { diagram: "netnaming", tags: ["schematic", "nets"] }),
+        ex("ex-divcalc", "Divider values computed, not copied", "Feedback and sense dividers are calculated for the actual voltage they must produce, with the math written next to them.", "A divider copied from another board quietly sets the wrong rail. Writing the formula beside it lets anyone verify the numbers in ten seconds.", "pass", { diagram: "divcalc", tags: ["schematic", "power"] }),
+        ex("ex-unwired", "Symbols placed but not wired", "Parts dropped onto the sheet with pins left hanging, or whole symbols carrying no connections at all.", "An unconnected symbol is a missing circuit that still looks present. The ERC flags floating pins, but only if you run it and read it. Every pin gets an answer, even if the answer is 'tied to ground on purpose'.", "fail", { diagram: "unwired", tags: ["schematic", "erc"] }),
+        ex("ex-wrongsym", "Wrong symbol or unverified pinout", "An IC, MOSFET or connector wired against a guessed pinout, or a symbol whose package does not match the real part.", "Pinouts differ between parts that look identical. Wiring a MOSFET or MCU from memory swaps gates for drains and peripherals for power pins. Check the datasheet pinout before a single wire is drawn.", "fail", { diagram: "wrongsym", tags: ["schematic", "pinout"] }),
+        ex("ex-passiveval", "Passives without values or ratings", "Resistors and capacitors missing their value on the sheet, or fitted with a value or voltage rating that does not fit the job.", "A part with no value gets built with whatever was in the drawer. And a cap rated for 10V on a 24V rail is a slow-motion firework. Every passive shows its value, and the rating suits the rail it sits on.", "fail", { diagram: "passiveval", tags: ["schematic", "passives"] }),
+        ex("ex-wirethru", "Wires through symbols, no buses", "A wire drawn straight through a symbol body, or a bundle of parallel nets drawn as a tangled fan instead of a bus.", "A wire through a symbol hides which pin it actually joins, and hand-drawn fans turn into wiring mistakes. Route around the body, and let a bus carry the parallel group with neat entries.", "fail", { diagram: "wirethru", tags: ["schematic", "readability"] }),
+        ex("ex-fuseshort", "Fuse wired across the rails", "A fuse connected from power to ground instead of in series with the positive feed.", "In series, a fuse gives its life to save the board. Across the rails it is a dead short the moment power touches it. The fuse always sits in the + line, between the source and everything else.", "fail", { diagram: "fuseshort", tags: ["schematic", "protection"] }),
+        ex("ex-conpol", "Connector polarity reversed", "A battery or power connector drawn with positive and negative swapped against the standard, for example XT60 wired minus-first.", "XT60 pin 1 is +. The schematic is where polarity gets decided, and everything downstream inherits it. Check the connector's standard once, then label it so nobody has to check again.", "fail", { diagram: "conpol", tags: ["schematic", "connectors"] }),
       ],
     },
     {
@@ -104,6 +142,7 @@ export const DEFAULT_SCHEME: Scheme = {
         ex("ex-drc", "DRC clean at the fab's real limits", "The design passes DRC with zero errors, the RDC baseline is 10 mil trace and spacing.", "A clean DRC at the fab's actual capability is the cheapest insurance that exists. Running it with looser rules just hides failures the fab will find for you, at your expense.", "pass", { diagram: "drc", tags: ["drc", "fab"] }),
         ex("ex-sliver", "Copper slivers between pads", "Thin copper splinters left between pads after a pour flood.", "Slivers can detach during etching and bridge neighbouring pads, or corrode loose months later. Adjust pour clearance and hunt for isolated islands after every flood.", "fail", { diagram: "sliver", tags: ["pour", "etching"] }),
         ex("ex-creep", "Creepage violation on HV nets", "Mains or high-voltage nets run closer than the creepage table allows.", "Too little surface distance lets tracking arcs form across the board over time, a safety failure, not a cosmetic one. HV nets get their own clearance rules and usually a routed slot.", "fail", { diagram: "creepage", tags: ["safety", "hv"] }),
+        ex("ex-edgeclear", "Copper right against the board edge", "Traces or pours running closer than about 0.3 mm to the board outline.", "The edge is where the board gets scored, routed and handled. Copper that close can end up exposed, chipped or shorted to the panel. Give the outline its own clear band.", "fail", { diagram: "edgeclear", tags: ["clearance", "dfm"] }),
       ],
     },
     {
@@ -114,6 +153,7 @@ export const DEFAULT_SCHEME: Scheme = {
       examples: [
         ex("ex-gerber", "Gerber set verified in a viewer", "All copper layers, masks, silks, paste, outline and the Excellon drill file exported, then eyeballed layer by layer in a Gerber viewer before zipping.", "Viewer review catches missing layers, mirrored art and wrong units before the board ships. Most 'the fab broke my board' stories start exactly here.", "pass", { diagram: "gerbers", tags: ["outputs", "review"] }),
         ex("ex-drill", "Missing or mismatched drill file", "The drill file is absent from the Gerber zip, or drill hits do not line up with the pads.", "Without the drill data nobody can make holes, or worse, the fab guesses. Re-export the whole set from one CAD session and verify every layer, every time.", "fail", { diagram: "drill", tags: ["outputs", "fab"] }),
+        ex("ex-mechlayer", "Board outline on its own mechanical layer", "The board edge, slots and cutouts live on a dedicated edge-cuts layer, never drawn into copper or silk.", "The fab's CAM reads the outline from one specific layer. If the shape is buried in copper art, someone has to guess where the board ends, and a wrong guess cuts your connectors in half.", "pass", { diagram: "mechlayer", tags: ["outputs", "fab"] }),
       ],
     },
   ],
@@ -132,6 +172,16 @@ export const DEFAULT_SCHEME: Scheme = {
     "Connectors from the library with 3D checked, spaced for housings",
     "4 mounting holes, one per corner, clear of components",
     "Gerber set and drill file verified layer-by-layer in a viewer",
+    "No more than two vias on any signal trace, none through THT pad fields",
+    "Every part fully inside the outline, copper kept off the board edge",
+    "Ports, buttons, LEDs and connectors on the top layer, aligned at the edges",
+    "Display fully aboard, nothing protruding beneath it",
+    "Solid ground plane on both layers and stitched, power on zones not webs",
+    "No copper under the crystal or inductors on any layer",
+    "Feedback divider at the FB pin, values computed for the real voltage",
+    "Fuse in series on the positive feed, connector polarity verified",
+    "Schematic: every symbol wired, every passive valued, pinouts checked against datasheets",
+    "ERC and silk warnings cleared, not just errors; project files named clearly",
   ],
   readings: [
     {
